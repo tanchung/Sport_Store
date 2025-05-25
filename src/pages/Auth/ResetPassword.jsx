@@ -50,7 +50,7 @@ function ResetPassword() {
 
             // Sử dụng trực tiếp axios để debug
             const response = await axios.post(
-                'https://milkstore-grbpfnduezbpgvgc.eastasia-01.azurewebsites.net/api/Auth/reset-password',
+                'https://milkshop-hpd4e9ewcsbdevfx.eastasia-01.azurewebsites.net/api/Auth/reset-password',
                 {
                     token: token,
                     newPassword: values.newPassword,
