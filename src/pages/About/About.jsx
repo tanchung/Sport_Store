@@ -12,11 +12,10 @@ const About = () => {
   const leaders = [
     {
       id: 1,
-      name: 'Trịnh Trung Hiển',
+      name: 'Nguyễn Đức Tâm',
       title: 'Tổng Giám Đốc',
-      bio: 'Với hơn 15 năm kinh nghiệm trong ngành thực phẩm dinh dưỡng, ông Hiển đã dẫn dắt MilkStore từ một startup nhỏ trở thành thương hiệu quốc gia được tin dùng.',
-      image:
-        'https://res.cloudinary.com/dvxnesld4/image/upload/v1745487749/SnapBG.ai_1745487733643_cyudqc.png',
+      bio: 'Với hơn 15 năm kinh nghiệm trong ngành thực phẩm dinh dưỡng, ông Tâm đã dẫn dắt MilkStore từ một startup nhỏ trở thành thương hiệu quốc gia được tin dùng.',
+      image: 'https://res.cloudinary.com/dvxnesld4/image/upload/v1745754536/SnapBG.ai_1745754250789_qzcijf.png',
       achievements: [
         'Top 10 Doanh nhân tiêu biểu Việt Nam 2024',
         'Giải thưởng Đổi mới sáng tạo trong ngành thực phẩm',
@@ -25,11 +24,11 @@ const About = () => {
     },
     {
       id: 2,
-      name: 'Nguyễn Quang Khải',
+      name: 'Nguyễn Đức Duy',
       title: 'Giám Đốc Điều Hành Tài Chính',
-      bio: 'Chuyên gia tài chính với bề dày kinh nghiệm tại các tập đoàn đa quốc gia, ông Khải đã xây dựng hệ thống quản trị tài chính vững mạnh cho MilkStore.',
+      bio: 'Chuyên gia tài chính với bề dày kinh nghiệm tại các tập đoàn đa quốc gia, ông Duy đã xây dựng hệ thống quản trị tài chính vững mạnh cho MilkStore.',
       image:
-        'https://res.cloudinary.com/dvxnesld4/image/upload/v1745751769/z6547203559835_bffbc96d890fd1d4d298b25123ba1a90_qw2ev4.jpg',
+        'https://res.cloudinary.com/dvxnesld4/image/upload/v1745487749/SnapBG.ai_1745487733643_cyudqc.png',
       achievements: [
         'CPA, CFA chứng chỉ quốc tế',
         '15+ năm kinh nghiệm quản lý tài chính',
@@ -38,9 +37,9 @@ const About = () => {
     },
     {
       id: 3,
-      name: 'Nguyễn Đức Tâm',
+      name: 'Lâm Họa My',
       title: 'Giám Đốc Điều Hành Sản Xuất',
-      bio: 'Kỹ sư công nghệ thực phẩm với niềm đam mê chất lượng, ông Tâm đảm bảo mọi sản phẩm MilkStore đều đạt chuẩn an toàn và dinh dưỡng cao nhất.',
+      bio: 'Kỹ sư công nghệ thực phẩm với niềm đam mê chất lượng, đảm bảo mọi sản phẩm MilkStore đều đạt chuẩn an toàn và dinh dưỡng cao nhất.',
       image:
         'https://res.cloudinary.com/dvxnesld4/image/upload/v1745754536/SnapBG.ai_1745754250789_qzcijf.png',
       achievements: [
@@ -49,21 +48,9 @@ const About = () => {
         'Chuyên gia hệ thống quản lý chất lượng',
       ],
     },
+
     {
       id: 4,
-      name: 'Nguyễn Khánh Hoài',
-      title: 'Giám đốc Điều hành Marketing',
-      bio: 'Với tầm nhìn chiến lược và khả năng lãnh đạo xuất sắc, ông Hoài đã góp phần mở rộng thị trường MilkStore ra 15 tỉnh thành trên cả nước.',
-      image:
-        'https://res.cloudinary.com/dvxnesld4/image/upload/v1745751662/z6547302081951_dc90a66ba180d5bee3e5fba9e7bb5125-removebg-preview_yj2aho.png',
-      achievements: [
-        'Thạc sĩ Quản trị Kinh doanh Harvard',
-        'Giải thưởng Lãnh đạo trẻ xuất sắc',
-        'Chuyên gia phát triển thị trường',
-      ],
-    },
-    {
-      id: 5,
       name: 'Nguyễn Văn Hiếu',
       title: 'Giám Đốc Nhân Sự',
       bio: 'Chuyên gia nhân sự với hơn 10 năm kinh nghiệm, ông Hiếu đã xây dựng đội ngũ nhân sự vững mạnh và phát triển văn hóa doanh nghiệp tại MilkStore.',
@@ -224,13 +211,13 @@ const About = () => {
           {/* Image Section */}
           <div className='relative h-[670px] overflow-hidden shadow-2xl lg:w-1/2'>
             <img
-              src='https://res.cloudinary.com/dvxnesld4/image/upload/v1745487749/SnapBG.ai_1745487733643_cyudqc.png'
+              src='https://res.cloudinary.com/dvxnesld4/image/upload/v1745754536/SnapBG.ai_1745754250789_qzcijf.png'
               alt='CEO MilkStore'
               className='h-full w-full object-cover'
             />
             <div className='absolute inset-0 bg-gradient-to-t from-blue-900/60 to-transparent'></div>
             <div className='absolute bottom-8 left-8 text-white'>
-              <p className='text-sm'>Trịnh Trung Hiển</p>
+              <p className='text-sm'>Nguyễn Đức Tâm</p>
               <p className='text-xl font-medium'>Tổng giám đốc MilkStore</p>
             </div>
           </div>
@@ -241,7 +228,7 @@ const About = () => {
               Thông điệp từ Tổng Giám Đốc
             </h2>
             <div className='mb-10 pt-6'>
-              <p className='font-bold text-blue-800 italic'>Trịnh Trung Hiển</p>
+              <p className='font-bold text-blue-800 italic'>Nguyễn Đức Tâm</p>
               <p className='text-blue-600'>
                 Tổng giám đốc Công ty CP Sữa MilkStore
               </p>
@@ -368,7 +355,7 @@ const About = () => {
           </div>
 
           {/* CEO on top */}
-          <div className='mb-8 flex justify-center'>
+          {/* <div className='mb-8 flex justify-center'>
             <div
               className='w-72 cursor-pointer p-4 text-center transition-colors hover:bg-blue-50 md:border-r-1 md:border-l-1 md:border-blue-800'
               onClick={() => handleLeaderClick(leaders[0])}
@@ -379,18 +366,21 @@ const About = () => {
               </h3>
               <p className='text-blue-800 italic'>{leaders[0].title}</p>
             </div>
-          </div>
+          </div> */}
 
           {/* Directors below */}
           <div className='mb-3 grid grid-cols-1 md:grid-cols-4'>
-            {leaders.slice(1).map((leader, idx, arr) => (
+            {leaders.slice(0).map((leader, idx, arr) => (
               <div
                 key={leader.id}
                 className={`cursor-pointer p-4 text-center transition-colors hover:bg-blue-50 ${idx === 0 ? 'md:border-l-1 md:border-blue-800' : ''} ${idx === arr.length - 1 ? 'md:border-r-1 md:border-blue-800' : ''} ${idx !== 0 ? 'md:border-l-1 md:border-blue-800' : ''}`}
                 onClick={() => handleLeaderClick(leader)}
               >
                 <h3 className='mb-2 text-xl font-bold text-blue-800'>
-                  <span className='text-lg font-normal'>Ông</span> {leader.name}
+                  <span className='text-lg font-normal'>
+                    {leader.id === 3 ? 'Bà' : 'Ông'} {/* Sửa thành Bà cho Lâm Họa My */}
+                  </span>{' '}
+                  {leader.name}
                 </h3>
                 <p className='text-blue-800 italic'>{leader.title}</p>
               </div>
