@@ -13,36 +13,23 @@ import ProductService from '../../services/Product/ProductServices';
 import { InfoCircleOutlined, CheckCircleOutlined, StarOutlined, SafetyOutlined } from '@ant-design/icons';
 
 // ---------- Component ShareThis ----------
-const ShareThisButton = ({ url, title, description, image }) => {
+// Component này xử lý việc khởi tạo và truyền data cho ShareThis
+const ShareThisButton = ({ url, title, description, image, networks }) => {
   useEffect(() => {
-    // Function to initialize ShareThis buttons
     const initShareThis = () => {
-      if (window.__sharethis__) {
-        // Configure ShareThis with custom data
-        const config = {
-          url: url,
-          title: title,
-          description: description,
-          image: image
-        };
-        
-        // Update the global config
-        if (window.__sharethis__.href) {
-          window.__sharethis__.href = url;
-        }
-        
-        // Initialize/reinitialize
-        if (window.__sharethis__.initialize) {
-          window.__sharethis__.initialize();
-        }
+      // Kiểm tra nếu thư viện ShareThis đã tải
+      if (window.__sharethis__ && window.__sharethis__.initialize) {
+        // Tên class bắt buộc để ShareThis nhận diện vị trí
+        // Hàm initialize sẽ đọc data-attributes trên div này
+        setTimeout(window.__sharethis__.initialize, 100);
       }
     };
-
-    // Check if ShareThis script is already loaded
+    
+    // Nếu ShareThis đã tải, khởi tạo ngay
     if (window.__sharethis__) {
       initShareThis();
     } else {
-      // Wait for script to load
+      // Nếu chưa tải, chờ script tải xong
       const script = document.getElementById('sharethis-script');
       if (script) {
         script.addEventListener('load', () => {
@@ -51,30 +38,32 @@ const ShareThisButton = ({ url, title, description, image }) => {
       }
     }
 
-    // Cleanup
     return () => {
+      // Dọn dẹp nút cũ để tránh bị trùng lặp khi component bị unmount/mount lại (thay đổi ID sản phẩm)
       const shareButtons = document.querySelector('.sharethis-inline-share-buttons');
       if (shareButtons) {
         shareButtons.innerHTML = '';
       }
     };
-  }, [url, title, description, image]);
+  }, [url, title, description, image, networks]); 
 
   return (
     <div 
+      // Class bắt buộc
       className="sharethis-inline-share-buttons" 
+      // Thuộc tính dữ liệu để ShareThis lấy thông tin chia sẻ
       data-url={url}
       data-title={title}
       data-description={description}
       data-image={image}
-      data-message={description}
+      // networks: Tùy chỉnh các nút (ví dụ: facebook,zalo,messenger)
+      data-networks={networks || "facebook,zalo,messenger,twitter,pinterest,email"} 
     ></div>
   );
 };
 
 
-
-// ---------- Main Component ----------
+// ---------- Main Component ProductDetail ----------
 const ProductDetail = () => {
   useScrollToTop();
   const { id } = useParams();
@@ -83,7 +72,22 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('description');
 
-  // Fetch product
+  // Fetch product and restore scroll position (Logic của bạn)
+  useEffect(() => {
+    const restoreScrollPosition = () => {
+      const savedPosition = sessionStorage.getItem('scrollPosition');
+      if (savedPosition !== null) {
+        window.scrollTo({ top: parseInt(savedPosition), behavior: 'auto' });
+        sessionStorage.removeItem('scrollPosition'); 
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    const timer = setTimeout(restoreScrollPosition, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
@@ -103,11 +107,79 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
+  // Cập nhật thủ công head tags (dự phòng cho SEO check chạy client-side)
+  useEffect(() => {
+    if (!product) return;
+
+    const productNameLocal = product.name || 'Sản phẩm không tên';
+    const rawDescriptionLocal = product.description || `Mua ${productNameLocal} chính hãng, giá tốt. Cam kết chất lượng và giao hàng nhanh.`;
+    const productDescriptionLocal = rawDescriptionLocal.substring(0, 155) + (rawDescriptionLocal.length > 155 ? '...' : '');
+
+    let productImageUrlLocal = '';
+    if (product.images && product.images.length > 0 && product.images[0].url) {
+      const imgUrl = product.images[0].url;
+      productImageUrlLocal = imgUrl.startsWith('http') ? imgUrl : `${window.location.origin}${imgUrl}`;
+    } else {
+      productImageUrlLocal = `${window.location.origin}/default-product.jpg`;
+    }
+
+    const canonicalUrlLocal = window.location.href;
+
+    // helper để tạo hoặc cập nhật thẻ meta
+    const upsertMeta = (attrName, content, isProperty = false) => {
+      if (!content) return;
+      const selector = isProperty ? `meta[property="${attrName}"]` : `meta[name="${attrName}"]`;
+      let el = document.head.querySelector(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        if (isProperty) el.setAttribute('property', attrName);
+        else el.setAttribute('name', attrName);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', String(content));
+    };
+
+    // Title
+    try { document.title = productNameLocal; } catch { /* ignore */ }
+
+    // Description / Keywords
+    upsertMeta('description', productDescriptionLocal);
+    upsertMeta('keywords', `${productNameLocal}, ${product.brand?.name || ''}, ${product.category || ''}, mua online`);
+
+    // Open Graph
+    upsertMeta('og:title', productNameLocal, true);
+    upsertMeta('og:description', productDescriptionLocal, true);
+    upsertMeta('og:image', productImageUrlLocal, true);
+    upsertMeta('og:url', canonicalUrlLocal, true);
+    upsertMeta('og:type', 'product', true);
+
+    // Twitter
+    upsertMeta('twitter:card', 'summary_large_image');
+    upsertMeta('twitter:title', productNameLocal);
+    upsertMeta('twitter:description', productDescriptionLocal);
+    upsertMeta('twitter:image', productImageUrlLocal);
+
+    // canonical link
+    let canonicalEl = document.head.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) {
+      canonicalEl = document.createElement('link');
+      canonicalEl.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalEl);
+    }
+    canonicalEl.setAttribute('href', canonicalUrlLocal);
+
+    // product price/brand as meta for crawlers
+    if (product.price) upsertMeta('product:price:amount', product.price, true);
+    if (product.brand?.name) upsertMeta('product:brand', product.brand.name, true);
+
+    // intentionally keep meta in place for crawlers
+  }, [product]);
+
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
   if (!product) return <NotFound />;
 
-  // SEO + OG data
+  // --- LOGIC TẠO DỮ LIỆU CHO THẺ META VÀ OG ---
   const productName = product.name || 'Sản phẩm không tên';
   const rawDescription = product.description || `Mua ${productName} chính hãng, giá tốt. Cam kết chất lượng và giao hàng nhanh.`;
   const productDescription = rawDescription.substring(0, 155) + (rawDescription.length > 155 ? '...' : '');
@@ -116,7 +188,7 @@ const ProductDetail = () => {
   let productImageUrl = '';
   if (product.images && product.images.length > 0 && product.images[0].url) {
     const imgUrl = product.images[0].url;
-    // Nếu URL đã có http/https thì giữ nguyên, nếu không thì thêm origin
+    // Kiểm tra nếu URL đã có http/https thì giữ nguyên, nếu không thì thêm origin
     productImageUrl = imgUrl.startsWith('http') ? imgUrl : `${window.location.origin}${imgUrl}`;
   } else {
     productImageUrl = `${window.location.origin}/default-product.jpg`;
@@ -125,11 +197,12 @@ const ProductDetail = () => {
   const canonicalUrl = window.location.href;
   const dimension = product.dimensions?.[0];
 
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Helmet SEO */}
       <Helmet>
-        <title>{productName} | VNHI</title>
+        <title>{productName}</title>
         <meta name="description" content={productDescription} />
         <link rel="canonical" href={canonicalUrl} />
         <meta name="keywords" content={`${productName}, ${product.brand?.name || ''}, ${product.category || ''}, mua online, sữa`} />
@@ -182,14 +255,17 @@ const ProductDetail = () => {
           <ProductInfo product={product} />
         </div>
 
-        {/* ShareThis */}
+        {/* ShareThis Integration */}
         <div className="mt-6 border-t pt-4">
           <h4 className="text-gray-700 font-medium mb-3">Chia sẻ sản phẩm này:</h4>
+          {/* Sử dụng component ShareThisButton */}
           <ShareThisButton 
             url={canonicalUrl}
             title={productName}
             description={productDescription}
             image={productImageUrl}
+            // Tùy chỉnh các nút hiển thị ở đây
+            networks="facebook,zalo,messenger,email,twitter" 
           />
         </div>
       </div>
@@ -214,7 +290,6 @@ const ProductDetail = () => {
         <div className="prose max-w-none">
           {activeTab === 'description' && (
             <div className="space-y-4">
-              {/* Info sections */}
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><InfoCircleOutlined className="text-blue-500" /></div>
                 <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Giới thiệu sản phẩm</h3><p className="text-gray-700">{product.description}</p></div>
@@ -243,13 +318,14 @@ const ProductDetail = () => {
               <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Đơn vị:</span> <span className="text-gray-600">{product.unit?.name || product.unit || 'Không có thông tin'}</span></div>
               <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Trạng thái:</span> <span className="text-gray-600">{product.status?.name || product.status || 'Đang hoạt động'}</span></div>
               <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Số lượng kho:</span> <span className="text-gray-600">{product.stockQuantity || 0}</span></div>
-
               {dimension && <>
                 <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Chiều dài:</span> <span className="text-gray-600">{dimension.lengthValue || 0} cm</span></div>
                 <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Chiều rộng:</span> <span className="text-gray-600">{dimension.widthValue || 0} cm</span></div>
                 <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Chiều cao:</span> <span className="text-gray-600">{dimension.heightValue || 0} cm</span></div>
                 <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Trọng lượng:</span> <span className="text-gray-600">{dimension.weightValue || 0} g</span></div>
               </>}
+              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Ngày tạo:</span> <span className="text-gray-600">{product.createdAt ? new Date(product.createdAt).toLocaleDateString('vi-VN') : 'Không có thông tin'}</span></div>
+              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Cập nhật:</span> <span className="text-gray-600">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('vi-VN') : 'Không có thông tin'}</span></div>
             </div>
           )}
         </div>
