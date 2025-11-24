@@ -236,8 +236,12 @@ const ProductDetail = () => {
         <div className="mt-6 border-t pt-4">
           <h4 className="text-gray-700 font-medium mb-3">Chia sẻ sản phẩm này:</h4>
           
-          {/* ShareThis BEGIN */}
-          <div className="sharethis-inline-share-buttons"></div>
+          {/* ShareThis BEGIN - Using SOP (ShareThis Onsite Platform) */}
+          <div className="sharethis-inline-share-buttons" 
+               data-url={canonicalUrl}
+               data-title={productName}
+               data-description={productDescription}
+               data-image={productImageUrl}></div>
           {/* ShareThis END */}
         </div>
       </div>
