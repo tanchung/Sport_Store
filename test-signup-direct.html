@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Signup Direct</title>
+</head>
+<body>
+    <h1>Test Direct Signup to Backend</h1>
+    <button onclick="testSignup()">Test Signup</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testSignup() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing...';
+
+            const testData = {
+                firstName: "Test",
+                lastName: "User",
+                phone: "1234567890",
+                avatar: "https://example.com/images/default-avatar.png",
+                permanentAddress: "",
+                gender: "Nam",
+                dateOfBirth: "2000-01-01",
+                email: "test@example.com",
+                username: "testuser123",
+                password: "Test@123"
+            };
+
+            try {
+                // Test 1: Direct to ngrok
+                console.log('Test 1: Direct to ngrok backend');
+                const response1 = await fetch('https://unrealistic-elton-denunciable.ngrok-free.dev/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                const data1 = await response1.json();
+                
+                resultEl.textContent = 'Direct to ngrok:\n' + 
+                    'Status: ' + response1.status + '\n' +
+                    'Response: ' + JSON.stringify(data1, null, 2);
+
+            } catch (error) {
+                resultEl.textContent = 'Error: ' + error.message + '\n' + error.stack;
+            }
+        }
+    </script>
+</body>
+</html>

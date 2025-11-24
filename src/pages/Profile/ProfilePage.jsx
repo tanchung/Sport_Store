@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, DatePicker, Select, Button, message, Spin, Tabs } from 'antd';
+import { MdOutlinePhotoCamera } from "react-icons/md";
+import { Form, Input, DatePicker, Select, Button, message, Spin, Tabs, Avatar } from 'antd';
 import { FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiEdit } from 'react-icons/fi';
 import moment from 'moment';
 import PasswordChageForm from './components/PasswordChageForm'
@@ -8,7 +9,7 @@ import PasswordChageForm from './components/PasswordChageForm'
 const { TabPane } = Tabs;
 
 const ProfilePage = () => {
-  const { currentUser, updateUserFields } = useAuth();
+  const { currentUser, updateUserFields, updateAvatar } = useAuth();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -18,20 +19,20 @@ const ProfilePage = () => {
   const { Option } = Select;
 
   useEffect(() => {
-    if (currentUser?.data) {
-      setUserData(currentUser.data);
+    if (currentUser) {
+      setUserData(currentUser);
       // console.log(currentUser)
       if (isEditing) {
         form.setFieldsValue({
-          // username: currentUser.data.username,
-          surname: currentUser.data.surname,
-          middleName: currentUser.data.middleName,
-          firstName: currentUser.data.firstName,
-          phoneNumber: currentUser.data.phoneNumber,
-          address: currentUser.data.address,
-          email: currentUser.data.email,
-          gender: currentUser.data.gender,
-          dob: currentUser.data.dob ? moment(currentUser.data.dob) : null,
+          username: currentUser.username,
+          lastName: currentUser.lastName,
+          firstName: currentUser.firstName,
+          phone: currentUser.phone,
+          avatar: currentUser.avatar,
+          permanentAddress: currentUser.permanentAddress,
+          email: currentUser.email,
+          gender: currentUser.gender,
+          dateOfBirth: currentUser.dateOfBirth ? moment(currentUser.dateOfBirth, 'DD/MM/YYYY') : null,
         });
       }
     }
@@ -40,30 +41,27 @@ const ProfilePage = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const formattedValues = {
-        ...values,
-        dob: values.dob ? values.dob.format('YYYY-MM-DD') : null,
+      // Prepare data in the format expected by the backend
+      const userUpdateData = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        phone: values.phone,
+        permanentAddress: values.permanentAddress,
+        gender: values.gender,
+        dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format('DD/MM/YYYY') : null,
+        username: values.username
       };
-      delete formattedValues.email;
 
-      const fieldsToUpdate = {};
-      Object.entries(formattedValues).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          fieldsToUpdate[key] = value;
-        }
-      });
-
-      const fields = Object.keys(fieldsToUpdate);
-      const valueArray = Object.values(fieldsToUpdate);
-      const result = await updateUserFields(fields, valueArray);
+      const result = await updateUserFields(userUpdateData);
 
       if (result.success) {
         message.success('Cập nhật thông tin thành công!');
         setIsEditing(false);
-        setUserData({
-          ...userData,
-          ...fieldsToUpdate
-        });
+        // Update local state with new data
+        setUserData(prev => ({
+          ...prev,
+          ...userUpdateData
+        }));
       } else {
         message.error(result.error || 'Không thể cập nhật thông tin. Vui lòng thử lại sau.');
       }
@@ -78,8 +76,8 @@ const ProfilePage = () => {
   const renderUserInfo = () => {
     if (!userData) return <Spin />;
 
-    const { surname, middleName, firstName, email, phoneNumber, address, gender, dob } = userData;
-    const fullName = `${surname || ''} ${middleName || ''} ${firstName || ''}`.trim();
+    const { username, lastName, firstName, email, phone, avatar, permanentAddress, gender, dateOfBirth } = userData;
+    const fullName = `${lastName || ''} ${firstName || ''}`.trim();
 
     return (
       <div className="space-y-6">
@@ -91,10 +89,10 @@ const ProfilePage = () => {
               <h3 className="text-lg font-medium text-gray-800">Thông tin cá nhân</h3>
             </div>
             <div className="space-y-3">
-              {/* <div>
+              <div>
                 <p className="text-sm text-gray-500">Tên đăng nhập</p>
-                <p className="font-medium">{currentUser?.data?.username}</p>
-              </div> */}
+                <p className="font-medium">{username || 'Chưa cập nhật'}</p>
+              </div>
               <div>
                 <p className="text-sm text-gray-500">Họ và tên</p>
                 <p className="font-medium">{fullName || 'Chưa cập nhật'}</p>
@@ -105,7 +103,7 @@ const ProfilePage = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Ngày sinh</p>
-                <p>{dob ? moment(dob).format('DD/MM/YYYY') : 'Chưa cập nhật'}</p>
+                <p>{dateOfBirth ? moment(dateOfBirth).format('DD/MM/YYYY') : 'Chưa cập nhật'}</p>
               </div>
             </div>
           </div>
@@ -122,11 +120,11 @@ const ProfilePage = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Số điện thoại</p>
-                <p>{phoneNumber || 'Chưa cập nhật'}</p>
+                <p>{phone || 'Chưa cập nhật'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Địa chỉ</p>
-                <p>{address || 'Chưa cập nhật'}</p>
+                <p>{permanentAddress || 'Chưa cập nhật'}</p>
               </div>
             </div>
           </div>
@@ -145,30 +143,32 @@ const ProfilePage = () => {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            surname: userData.surname || '',
-            middleName: userData.middleName || '',
+            username: userData.username || '',
+            lastName: userData.lastName || '',
             firstName: userData.firstName || '',
-            phoneNumber: userData.phoneNumber || '',
-            address: userData.address || '',
+            phone: userData.phone || '',
+            avatar: userData.avatar || '',
+            permanentAddress: userData.permanentAddress || '',
             email: userData.email || '',
             gender: userData.gender || '',
-            dob: userData.dob ? moment(userData.dob) : null,
+            dateOfBirth: userData.dateOfBirth ? moment(userData.dateOfBirth, 'DD/MM/YYYY') : null,
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Form.Item
-              name="surname"
+              name="username"
+              label="Tên đăng nhập"
+              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập' }]}
+            >
+              <Input prefix={<FiUser className="text-gray-400" />} placeholder="Nhập tên đăng nhập" />
+            </Form.Item>
+
+            <Form.Item
+              name="lastName"
               label="Họ"
               rules={[{ required: true, message: 'Vui lòng nhập họ' }]}
             >
               <Input prefix={<FiUser className="text-gray-400" />} placeholder="Nhập họ" />
-            </Form.Item>
-
-            <Form.Item
-              name="middleName"
-              label="Tên đệm"
-            >
-              <Input prefix={<FiUser className="text-gray-400" />} placeholder="Nhập tên đệm" />
             </Form.Item>
 
             <Form.Item
@@ -193,7 +193,7 @@ const ProfilePage = () => {
             </Form.Item>
 
             <Form.Item
-              name="phoneNumber"
+              name="phone"
               label="Số điện thoại"
               rules={[
                 { required: true, message: 'Vui lòng nhập số điện thoại' },
@@ -205,7 +205,7 @@ const ProfilePage = () => {
           </div>
 
           <Form.Item
-            name="address"
+            name="permanentAddress"
             label="Địa chỉ"
           >
             <Input prefix={<FiMapPin className="text-gray-400" />} placeholder="Nhập địa chỉ" />
@@ -224,7 +224,7 @@ const ProfilePage = () => {
             </Form.Item>
 
             <Form.Item
-              name="dob"
+              name="dateOfBirth"
               label="Ngày sinh"
             >
               <DatePicker
@@ -257,43 +257,90 @@ const ProfilePage = () => {
       </div>
 
       <div className="mb-8 bg-white rounded-lg shadow p-6 flex flex-col items-center sm:flex-row sm:items-start">
-        <div className="w-32 h-32 mb-4 sm:mb-0 sm:mr-8">
-          <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
-            <FiUser className="h-16 w-16 text-blue-600" />
+        <div className="relative w-32 h-32 mb-4 sm:mb-0 sm:mr-8">
+          <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden relative border-4 border-white shadow">
+            {userData?.avatar ? (
+              <img
+                src={userData.avatar}
+                alt="User avatar"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <FiUser className="text-gray-400 text-6xl" />
+            )}
           </div>
+
+          {/* Icon nằm đè lên viền */}
+          <label
+            htmlFor="avatarUpload"
+            className="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow cursor-pointer hover:bg-gray-100 border border-gray-300"
+          >
+            <MdOutlinePhotoCamera className="text-blue-600 text-lg" />
+          </label>
+
+          {/* input file ẩn */}
+          <input
+            id="avatarUpload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+
+              try {
+                const result = await updateAvatar(file);
+
+                if (result.success) {
+                  message.success("Cập nhật ảnh đại diện thành công!");
+                  // The updateAvatar function already calls fetchUserInfo to update currentUser
+                  // So we just need to update local state
+                  setUserData(prev => ({
+                    ...prev,
+                    avatar: result.data.avatar || result.data.avatarUrl
+                  }));
+                } else {
+                  message.error(result.error || "Cập nhật ảnh đại diện thất bại!");
+                }
+              } catch (error) {
+                console.error("Update avatar error:", error);
+                message.error("Có lỗi khi cập nhật ảnh đại diện!");
+              }
+            }}
+          />
         </div>
 
         <div className="flex-1 text-center sm:text-left">
           <h2 className="text-xl font-semibold">
             {userData ?
-              `${userData.surname || ''} ${userData.middleName || ''} ${userData.firstName || ''}`.trim() :
+              `${userData.lastName || ''} ${userData.firstName || ''}`.trim() :
               'Đang tải...'}
           </h2>
           <p className="text-gray-600 mt-1">{userData?.email || ''}</p>
-          <p className="text-gray-500 mt-1">{userData?.phoneNumber || 'Chưa cập nhật số điện thoại'}</p>
+          {/* <p className="text-gray-500 mt-1">{userData?.phone || 'Chưa cập nhật số điện thoại'}</p> */}
 
-         <div className='mt-4 flex flex-wrap gap-2 justify-center sm:justify-start'>
-         {!isEditing && activeTab === 'profile' && (
-            <Button
-              type="primary"
-              icon={<FiEdit className="mr-1" />}
-              onClick={() => setIsEditing(true)}
+          <div className='mt-4 flex flex-wrap gap-2 justify-center sm:justify-start'>
+            {!isEditing  && (
+              <Button
+                type="primary"
+                // icon={<FiEdit className="mr-1" />}
+                onClick={() => setIsEditing(true)}
+              >
+                Chỉnh sửa thông tin
+              </Button>
+            )}
+
+            {/* <Button
+              // icon={<FiEdit className="mr-1" />}
+              onClick={() => {
+                setActiveTab('password');
+                setIsEditing(true);
+              }}
+              className={activeTab === 'password' ? 'bg-blue-50' : ''}
             >
-              Chỉnh sửa thông tin
-            </Button>
-          )}
-
-          <Button
-            icon={<FiEdit className="mr-1" />}
-            onClick={() => {
-              setActiveTab('password');
-              setIsEditing(true);
-            }}
-            className={activeTab === 'password' ? 'bg-blue-50' : ''}
-          > 
-            Đổi mật khẩu
-          </Button>
-         </div>
+              Đổi mật khẩu
+            </Button> */}
+          </div>
         </div>
       </div>
 

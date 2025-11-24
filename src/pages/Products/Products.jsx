@@ -12,8 +12,10 @@ import {
   SlidersHorizontal,
   Star,
   X,
+  Loader2,
 } from 'lucide-react'
 import { useProductStore } from './ProductStore'
+import { useLocation } from 'react-router-dom'
 
 const Products = () => {
   const [searchText, setSearchText] = useState('')
@@ -34,9 +36,20 @@ const Products = () => {
     fetchProducts,
     updateFilters,
     changePage,
+    changePageSize,
     fetchCategories,
     categories,
   } = useProductStore()
+
+  const location = useLocation()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const qpBrand = params.get('brand')
+    if (qpBrand) {
+      updateFilters({ brand: qpBrand })
+    }
+  }, [location.search])
 
   useEffect(() => {
     fetchCategories()
@@ -45,6 +58,19 @@ const Products = () => {
   useEffect(() => {
     fetchProducts()
   }, [])
+
+  // Debug pagination changes
+  useEffect(() => {
+    console.log('🛒 Products Pagination Updated:', {
+      currentPage: pagination.currentPage,
+      totalPages: pagination.totalPages,
+      totalItems: pagination.totalItems,
+      pageSize: pagination.pageSize,
+      hasPrevious: pagination.hasPrevious,
+      hasNext: pagination.hasNext,
+      productsLength: products.length
+    });
+  }, [pagination, products.length])
 
   useEffect(() => {
     let currentFilters = []
@@ -55,6 +81,22 @@ const Products = () => {
 
     if (filters.searchTerm) {
       currentFilters.push({ type: 'search', value: filters.searchTerm })
+    }
+
+    if (filters.brand) {
+      currentFilters.push({ type: 'brand', value: filters.brand })
+    }
+
+    if (filters.priceMin || filters.priceMax) {
+      let priceLabel = ''
+      if (filters.priceMin && filters.priceMax) {
+        priceLabel = `${filters.priceMin.toLocaleString()}₫ - ${filters.priceMax.toLocaleString()}₫`
+      } else if (filters.priceMin) {
+        priceLabel = `Trên ${filters.priceMin.toLocaleString()}₫`
+      } else if (filters.priceMax) {
+        priceLabel = `Dưới ${filters.priceMax.toLocaleString()}₫`
+      }
+      currentFilters.push({ type: 'price', value: priceLabel })
     }
 
     let sortLabel = ''
@@ -83,6 +125,11 @@ const Products = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handlePageSizeChange = pageSize => {
+    changePageSize(pageSize)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleSearchSubmit = e => {
     if (e) {
       e.preventDefault()
@@ -93,10 +140,14 @@ const Products = () => {
   const removeFilter = filter => {
     if (filter.type === 'category') {
       setSelectedCategory({ id: null, value: 'Tất cả' })
-      updateFilters({ categoryId: null })
+      updateFilters({ category: null })
     } else if (filter.type === 'search') {
       setSearchText('')
       updateFilters({ searchTerm: '' })
+    } else if (filter.type === 'brand') {
+      updateFilters({ brand: null })
+    } else if (filter.type === 'price') {
+      updateFilters({ priceMin: null, priceMax: null })
     } else if (filter.type === 'sort') {
       updateFilters({
         sortBy: 'ProductName',
@@ -113,7 +164,10 @@ const Products = () => {
     setShowSortDropdown(false)
 
     updateFilters({
-      categoryId: null,
+      category: null,
+      brand: null,
+      priceMin: null,
+      priceMax: null,
       trendId: null,
       searchTerm: '',
       sortBy: 'ProductName',
@@ -129,7 +183,7 @@ const Products = () => {
   const handleCategoryChange = category => {
     setSelectedCategory(category)
     updateFilters({
-      categoryId: category.id,
+      category: category.id || null,
     })
     setShowCategoryDropdown(false)
   }
@@ -306,6 +360,103 @@ const Products = () => {
                 </div>
               </div>
 
+              {/* Price Filter Section */}
+              <div className='mb-6'>
+                <div className='flex items-center justify-between mb-3'>
+                  <h3 className='text-lg font-medium'>GIÁ</h3>
+                  <ChevronDown size={16} className='text-gray-500' />
+                </div>
+                <div className='relative'>
+                  <select
+                    value={(() => {
+                      if (!filters.priceMin && !filters.priceMax) return 'all';
+                      if (filters.priceMin === 0 && filters.priceMax === 1000000) return 'under-1m';
+                      if (filters.priceMin === 1000000 && filters.priceMax === 2000000) return '1m-2m';
+                      if (filters.priceMin === 2000000 && filters.priceMax === 3000000) return '2m-3m';
+                      if (filters.priceMin === 3000000 && filters.priceMax === 4000000) return '3m-4m';
+                      if (filters.priceMin === 4000000 && (filters.priceMax === null || filters.priceMax === '' || filters.priceMax === undefined)) return 'over-4m';
+                      return 'all';
+                    })()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      switch (value) {
+                        case 'all':
+                          updateFilters({ priceMin: '', priceMax: '' });
+                          break;
+                        case 'under-1m':
+                          updateFilters({ priceMin: 0, priceMax: 1000000 });
+                          break;
+                        case '1m-2m':
+                          updateFilters({ priceMin: 1000000, priceMax: 2000000 });
+                          break;
+                        case '2m-3m':
+                          updateFilters({ priceMin: 2000000, priceMax: 3000000 });
+                          break;
+                        case '3m-4m':
+                          updateFilters({ priceMin: 3000000, priceMax: 4000000 });
+                          break;
+                        case 'over-4m':
+                          updateFilters({ priceMin: 4000000, priceMax: null });
+                          break;
+                        default:
+                          updateFilters({ priceMin: '', priceMax: '' });
+                      }
+                    }}
+                    className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  >
+                    <option value='all'>Tất cả</option>
+                    <option value='under-1m'>Dưới 1,000,000 VND</option>
+                    <option value='1m-2m'>1,000,000 - 2,000,000 VND</option>
+                    <option value='2m-3m'>2,000,000 - 3,000,000 VND</option>
+                    <option value='3m-4m'>3,000,000 - 4,000,000 VND</option>
+                    <option value='over-4m'>Trên 4,000,000 VND</option>
+                  </select>
+                </div>
+                {(filters.priceMin || filters.priceMax) && (
+                  <button
+                    onClick={() => updateFilters({ priceMin: '', priceMax: '' })}
+                    className='text-xs text-blue-600 hover:text-blue-800 mt-2'
+                  >
+                    Xóa bộ lọc giá
+                  </button>
+                )}
+              </div>
+
+              {/* Brand Filter Section */}
+              <div className='mb-6'>
+                <div className='flex items-center justify-between mb-3'>
+                  <h3 className='text-lg font-medium'>THƯƠNG HIỆU</h3>
+                  <ChevronDown size={16} className='text-gray-500' />
+                </div>
+                <div className='relative'>
+                  <select
+                    value={filters.brand || 'all'}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateFilters({ brand: value === 'all' ? '' : value });
+                    }}
+                    className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  >
+                    <option value='all'>Tất cả</option>
+                    <option value='Nike'>Nike</option>
+                    <option value='Adidas'>Adidas</option>
+                    <option value='Puma'>Puma</option>
+                    <option value='Mizuno'>Mizuno</option>
+                    <option value='Akka'>Akka</option>
+                    <option value='Kamito'>Kamito</option>
+                    <option value='Jogarbola'>Jogarbola</option>
+                  </select>
+                </div>
+                {filters.brand && (
+                  <button
+                    onClick={() => updateFilters({ brand: '' })}
+                    className='text-xs text-blue-600 hover:text-blue-800 mt-2'
+                  >
+                    Xóa bộ lọc thương hiệu
+                  </button>
+                )}
+              </div>
+
               {/* Sort Options Dropdown */}
               <div className='mb-6'>
                 <div className='relative'>
@@ -421,24 +572,6 @@ const Products = () => {
                 <span className='font-medium'>{pagination.totalItems}</span>
                 <span> sản phẩm</span>
               </div>
-              {/* <div className="relative w-48">
-                <select
-                  value={
-                    filters.sortBy === 'ProductName' ? 'default' : 
-                    filters.sortBy === 'priceActive' && filters.sortAscending ? 'price-low-high' : 'price-high-low'
-                  }
-                  onChange={(e) => handleSortChange(e.target.value)}
-                  className="w-full appearance-none px-4 py-2 pr-8 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                >
-                  <option value="default">Sắp xếp: Mặc định</option>
-                  <option value="price-low-high">Giá: Thấp đến Cao</option>
-                  <option value="price-high-low">Giá: Cao đến Thấp</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                />
-              </div> */}
             </div>
 
             {products.length === 0 ? (
@@ -465,23 +598,65 @@ const Products = () => {
               </div>
             ) : (
               <>
-                <div className='grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4'>
-                  {products.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                <div className='relative'>
+                  <div className={`grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 ${loading ? 'opacity-50' : ''}`}>
+                    {products.map(product => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {/* Loading overlay for products grid */}
+                  {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
+                      <div className="flex flex-col items-center space-y-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        <span className="text-sm text-gray-600">Đang tải sản phẩm...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Pagination */}
-                <div className='mt-8'>
-                  <Pagination
-                    currentPage={pagination.currentPage}
-                    totalPages={pagination.totalPages}
-                    onPageChange={handlePageChange}
-                    itemsPerPage={pagination.pageSize}
-                    totalItems={pagination.totalItems}
-                    hasPrevious={pagination.currentPage > 1}
-                    hasNext={pagination.currentPage < pagination.totalPages}
-                  />
+                <div className='mt-8 relative'>
+                  {/* Loading overlay during pagination */}
+                  {loading && (
+                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                        <span className="text-sm text-gray-600">Đang tải...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <Pagination
+                      currentPage={pagination.currentPage}
+                      totalPages={pagination.totalPages}
+                      onPageChange={handlePageChange}
+                      itemsPerPage={pagination.pageSize}
+                      totalItems={pagination.totalItems}
+                      hasPrevious={pagination.hasPrevious}
+                      hasNext={pagination.hasNext}
+                      loading={loading}
+                    />
+
+                    {/* Page size selector */}
+                    <div className='mt-4 flex items-center justify-center md:justify-start'>
+                      <span className='mr-2 text-sm text-gray-700'>Hiển thị:</span>
+                      <select
+                        value={pagination.pageSize}
+                        onChange={e => handlePageSizeChange(Number(e.target.value))}
+                        disabled={loading}
+                        className='rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
+                      >
+                        {[12, 24, 36, 48].map(size => (
+                          <option key={size} value={size}>
+                            {size} sản phẩm
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </>
             )}

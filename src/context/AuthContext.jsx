@@ -14,6 +14,8 @@ export const AuthProvider = ({ children }) => {
         const accessToken = CookieService.getAccessToken();
 
         if (accessToken) {
+            // Optimistically mark authenticated; we'll refine user info next
+            setIsAuthenticated(true);
             fetchUserInfo();
         } else {
             setLoading(false);
@@ -22,62 +24,46 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUserInfo = async () => {
         try {
+            console.log('AuthContext.fetchUserInfo: start');
             const response = await AuthService.info();
+            console.log('AuthContext.fetchUserInfo: ok', response);
             if (response.status === 200) {
                 setCurrentUser(response.data);
                 setIsAuthenticated(true);
             }
         } catch (error) {
-            if (error.response && error.response.status === 401) {
-                logout();
+            console.error('AuthContext.fetchUserInfo: error', error);
+            const hasTokens = CookieService.hasAuthTokens();
+            if (error?.response?.status === 401) {
+                console.warn('AuthContext.fetchUserInfo: 401 from /user/getUser');
+                // Fallback: keep authenticated if tokens exist so UI (cart) is visible
+                if (hasTokens) setIsAuthenticated(true);
+            } else {
+                if (hasTokens) setIsAuthenticated(true);
             }
         } finally {
             setLoading(false);
         }
     };
 
-    const updateUserFields = async (updateFields, updateValues) => {
+    const updateUserFields = async (userData) => {
         try {
-            if (!updateFields || !updateValues || !Array.isArray(updateFields) || !Array.isArray(updateValues)) {
-                console.error('Invalid parameters for updateUserFields:', { updateFields, updateValues });
+            if (!userData || typeof userData !== 'object') {
+                console.error('Invalid userData for updateUserFields:', userData);
                 return {
                     success: false,
-                    error: 'Invalid parameters for update operation'
+                    error: 'Invalid user data for update operation'
                 };
             }
 
-            if (updateFields.length === 0) {
-                return { success: true, data: { message: 'No fields to update' } };
-            }
-
-            if (updateFields.length !== updateValues.length) {
-                console.error('Mismatched arrays length:', {
-                    fieldsLength: updateFields.length,
-                    valuesLength: updateValues.length
-                });
+            if (!currentUser?.id) {
                 return {
                     success: false,
-                    error: 'Mismatch between fields and values'
+                    error: 'User ID not found'
                 };
             }
 
-            const patchData = updateFields.map((field, index) => {
-                if (field === undefined || field === null) {
-                    console.error('Undefined field at index', index);
-                    return null;
-                }
-                return {
-                    op: 'replace',
-                    path: '/' + field,
-                    value: updateValues[index]
-                };
-            }).filter(item => item !== null); // Remove any nulls
-
-            if (patchData.length === 0) {
-                return { success: true, data: { message: 'No valid fields to update' } };
-            }
-
-            const response = await AuthService.updateInfo(patchData);
+            const response = await AuthService.updateInfo(userData, currentUser.id);
 
             if (response.status === 200) {
                 await fetchUserInfo();
@@ -97,23 +83,70 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const login = async (username, password) => {
+    const updateAvatar = async (file) => {
         try {
-            const response = await AuthService.login(username, password);
-            if (response) {
-                CookieService.setAuthTokens(
-                    response.data.accessToken,
-                    response.data.refreshToken
-                );
+            if (!file) {
+                return {
+                    success: false,
+                    error: 'No file provided'
+                };
+            }
 
+            if (!currentUser?.id) {
+                return {
+                    success: false,
+                    error: 'User ID not found'
+                };
+            }
+
+            const response = await AuthService.updateAvatar(file, currentUser.id);
+
+            if (response.status === 200) {
                 await fetchUserInfo();
-
-                return { success: true };
+                return { success: true, data: response.data };
             }
 
             return {
                 success: false,
-                error: response.data?.message || 'Đăng nhập thất bại'
+                error: response.data?.message || 'Cập nhật avatar thất bại'
+            };
+        } catch (error) {
+            console.error('Error updating avatar:', error);
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật avatar'
+            };
+        }
+    };
+
+    const login = async (username, password) => {
+        try {
+            const response = await AuthService.login(username, password);
+            if (response && response.data) {
+                // Backend trả về ApiResponse với structure: {code, message, result}
+                // result chứa AuthenticationDto với access_token và refresh_token
+                const { code, message, result } = response.data;
+
+                if (code === 200 && result) {
+                    CookieService.setAuthTokens(
+                        result.access_token,
+                        result.refresh_token
+                    );
+
+                    await fetchUserInfo();
+
+                    return { success: true };
+                } else {
+                    return {
+                        success: false,
+                        error: message || 'Đăng nhập thất bại'
+                    };
+                }
+            }
+
+            return {
+                success: false,
+                error: 'Không nhận được phản hồi từ server'
             };
         } catch (error) {
             console.error('Lỗi khi đăng nhập:', error);
@@ -138,9 +171,11 @@ export const AuthProvider = ({ children }) => {
             };
         } catch (error) {
             console.error('Lỗi khi đăng xuất:', error);
+            // Clear tokens even if logout fails
+            CookieService.removeAuthTokens();
             return {
                 success: false,
-                error: error.response?.data?.message || 'Đăng xuất thất bại'
+                error: error?.response?.data?.message || error?.message || 'Đăng xuất thất bại'
             };
         }
     };
@@ -216,9 +251,11 @@ export const AuthProvider = ({ children }) => {
         if (!CookieService.hasAuthTokens()) return;
 
          const handleAuthLogout = () => {
+            // Clear local auth state without re-dispatching logout to avoid loop
             setCurrentUser(null);
             setIsAuthenticated(false);
-            AuthService.logout();
+            // Ensure tokens are cleared (no events dispatched here)
+            try { CookieService.removeAuthTokens(); } catch (e) {}
         };
 
         window.addEventListener('auth:logout', handleAuthLogout);
@@ -307,6 +344,7 @@ export const AuthProvider = ({ children }) => {
         sendOtp,
         verifyOtpAndRegister,
         updateUserFields,
+        updateAvatar,
         changePassword,
         forgotPassword,
         resetPassword,

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Pagination Visibility - Trang Sản Phẩm</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #2563eb;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .status.debug { background-color: #fef3c7; color: #d97706; }
+        .status.issue { background-color: #fef2f2; color: #dc2626; }
+        .status.success { background-color: #dcfce7; color: #166534; }
+        .code-block {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .debug-checklist {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .debug-checklist h4 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .debug-checklist ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .debug-checklist li {
+            margin: 5px 0;
+        }
+        .pagination-test {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 20px;
+            background-color: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 15px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .test-button {
+            padding: 4px 12px;
+            border: 1px solid #93c5fd;
+            border-radius: 6px;
+            background: white;
+            color: #2563eb;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            min-height: 32px;
+            min-width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .test-button:hover {
+            background-color: #eff6ff;
+        }
+        .test-button.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .test-button:disabled {
+            color: #9ca3af;
+            border-color: #d1d5db;
+            cursor: not-allowed;
+            background-color: #f9fafb;
+        }
+        .console-output {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .console-output .log-debug { color: #fbbf24; }
+        .console-output .log-error { color: #f87171; }
+        .console-output .log-info { color: #60a5fa; }
+        .console-output .log-success { color: #34d399; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Pagination Visibility - Trang Sản Phẩm</h1>
+    
+    <div class="test-section">
+        <h2 class="test-title">🚨 Vấn Đề: Nút Số Trang Không Hiển Thị</h2>
+        
+        <div class="status issue">❌ Các nút số trang (1, 2, 3, 4...) không xuất hiện trên giao diện</div>
+        
+        <h3>🔍 Debug Steps Đã Thêm:</h3>
+        <ul>
+            <li>✅ Thêm console.log vào Pagination component</li>
+            <li>✅ Thêm debug cho Products.jsx pagination data</li>
+            <li>✅ Thêm debug cho ProductStore API response</li>
+            <li>✅ Kiểm tra logic getVisiblePages()</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2 class="test-title">📊 Debug Checklist</h2>
+        
+        <div class="debug-checklist">
+            <h4>1. Kiểm tra Dữ Liệu Pagination</h4>
+            <ul>
+                <li>🔍 Mở Developer Tools → Console</li>
+                <li>🔍 Tìm log "🛒 Products Pagination Data"</li>
+                <li>🔍 Kiểm tra: totalPages > 1?</li>
+                <li>🔍 Kiểm tra: totalItems > 0?</li>
+                <li>🔍 Kiểm tra: currentPage có giá trị hợp lệ?</li>
+            </ul>
+        </div>
+        
+        <div class="debug-checklist">
+            <h4>2. Kiểm tra API Response</h4>
+            <ul>
+                <li>🔍 Tìm log "🔍 ProductStore API Response"</li>
+                <li>🔍 Kiểm tra: response.metadata có dữ liệu?</li>
+                <li>🔍 Kiểm tra: pageData.totalPages > 1?</li>
+                <li>🔍 Kiểm tra: response.products có sản phẩm?</li>
+            </ul>
+        </div>
+        
+        <div class="debug-checklist">
+            <h4>3. Kiểm tra Component Rendering</h4>
+            <ul>
+                <li>🔍 Tìm log "🔍 Pagination Debug"</li>
+                <li>🔍 Kiểm tra: Component có được render?</li>
+                <li>🔍 Tìm log "⚠️ Pagination hidden" nếu bị ẩn</li>
+                <li>🔍 Tìm log "📄 Visible Pages" để xem mảng trang</li>
+            </ul>
+        </div>
+        
+        <div class="debug-checklist">
+            <h4>4. Kiểm tra CSS và Visibility</h4>
+            <ul>
+                <li>🔍 Inspect Element trên vùng pagination</li>
+                <li>🔍 Kiểm tra: Các button có trong DOM?</li>
+                <li>🔍 Kiểm tra: CSS display, visibility, opacity</li>
+                <li>🔍 Kiểm tra: z-index, position conflicts</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2 class="test-title">🎯 Expected Console Output</h2>
+        
+        <h3>Nếu hoạt động bình thường, bạn sẽ thấy:</h3>
+        <div class="console-output">
+<span class="log-info">🔍 ProductStore API Response: {
+  response: { products: [...], metadata: {...} },
+  pageData: { totalPages: 5, currentPage: 1, totalCount: 48, ... },
+  productsCount: 12
+}</span>
+
+<span class="log-success">📊 ProductStore New Pagination: {
+  currentPage: 1,
+  totalPages: 5,
+  totalItems: 48,
+  pageSize: 12,
+  hasPrevious: false,
+  hasNext: true
+}</span>
+
+<span class="log-info">🛒 Products Pagination Data: {
+  currentPage: 1,
+  totalPages: 5,
+  totalItems: 48,
+  pageSize: 12,
+  hasPrevious: false,
+  hasNext: true,
+  loading: false,
+  productsLength: 12
+}</span>
+
+<span class="log-debug">🔍 Pagination Debug: {
+  currentPage: 1,
+  totalPages: 5,
+  totalItems: 48,
+  itemsPerPage: 12,
+  hasPrevious: false,
+  hasNext: true,
+  loading: false
+}</span>
+
+<span class="log-success">📄 Visible Pages: [1, 2, 3, 4, 5]</span>
+<span class="log-success">🎯 Should show first page button: false</span>
+<span class="log-success">🎯 Should show last page button: false</span>
+        </div>
+        
+        <h3>Nếu có vấn đề, bạn có thể thấy:</h3>
+        <div class="console-output">
+<span class="log-error">⚠️ Pagination hidden: totalPages = 0</span>
+<span class="log-error">🔍 ProductStore API Response: { response: null, pageData: {}, productsCount: 0 }</span>
+<span class="log-error">📊 ProductStore New Pagination: { totalPages: 0, totalItems: 0, ... }</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2 class="test-title">🛠️ Possible Solutions</h2>
+        
+        <h3>Nếu totalPages = 0 hoặc 1:</h3>
+        <div class="code-block">
+// Kiểm tra API endpoint có trả về đúng dữ liệu không
+// Có thể cần thay đổi pageSize hoặc kiểm tra backend
+        </div>
+        
+        <h3>Nếu component không render:</h3>
+        <div class="code-block">
+// Kiểm tra điều kiện render trong Products.jsx
+// Có thể products.length === 0 ngăn pagination hiển thị
+        </div>
+        
+        <h3>Nếu CSS ẩn các nút:</h3>
+        <div class="code-block">
+// Thêm CSS debug để làm nổi bật các nút
+.pagination button {
+  background-color: red !important;
+  border: 2px solid blue !important;
+}
+        </div>
+        
+        <h3>Nếu loading state luôn true:</h3>
+        <div class="code-block">
+// Kiểm tra ProductStore loading state
+// Có thể loading không được set về false
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2 class="test-title">🧪 Test Pagination Manually</h2>
+        
+        <h3>Pagination Test (Should look like this):</h3>
+        <div class="pagination-test">
+            <button class="test-button">‹</button>
+            <button class="test-button active">1</button>
+            <button class="test-button">2</button>
+            <button class="test-button">3</button>
+            <button class="test-button">4</button>
+            <button class="test-button">5</button>
+            <span style="color: #9ca3af; padding: 0 8px;">...</span>
+            <button class="test-button">10</button>
+            <button class="test-button">›</button>
+        </div>
+        
+        <p><strong>Nếu bạn không thấy các nút tương tự như trên trong trang sản phẩm, có vấn đề với rendering hoặc CSS.</strong></p>
+    </div>
+
+    <div class="test-section">
+        <h2 class="test-title">🚀 Next Steps</h2>
+        
+        <div class="status debug">🔍 Hãy mở trang sản phẩm và kiểm tra Console logs</div>
+        
+        <ol>
+            <li><strong>Mở trang sản phẩm (/san-pham)</strong></li>
+            <li><strong>Mở Developer Tools (F12)</strong></li>
+            <li><strong>Vào tab Console</strong></li>
+            <li><strong>Tìm các log debug đã thêm</strong></li>
+            <li><strong>Báo cáo kết quả để tôi có thể khắc phục</strong></li>
+        </ol>
+        
+        <p><strong>Dựa vào console logs, tôi sẽ xác định chính xác nguyên nhân và khắc phục vấn đề!</strong></p>
+    </div>
+</body>
+</html>

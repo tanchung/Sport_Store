@@ -8,10 +8,16 @@ const CartItemsList = ({
   handleRemoveItem,
   checkedItems = [],
   onCheckedItemsChange,
+  onToggleItemSelection,
 }) => {
   const isChecked = item => checkedItems.some(checked => checked.id === item.id)
 
   const handleCheckboxChange = item => {
+    if (onToggleItemSelection) {
+      onToggleItemSelection(item)
+      return
+    }
+    // Fallback: local toggle only
     let newChecked
     if (isChecked(item)) {
       newChecked = checkedItems.filter(checked => checked.id !== item.id)

@@ -27,6 +27,16 @@ const OrderShipping = () => {
     updateShippingFilters,
     changeShippingPage,
     changeShippingPageSize,
+    fetchOrdersShipping,
+    // Search related state
+    searchShippingResults,
+    searchShippingLoading,
+    searchShippingError,
+    searchShippingPagination,
+    isSearchShippingMode,
+    searchShippingOrders,
+    clearShippingSearch,
+    changeSearchShippingPage,
   } = useOrderStore()
 
   const [hoveredOrder, setHoveredOrder] = useState(null)
@@ -61,6 +71,61 @@ const OrderShipping = () => {
     }
   }
 
+  // Format date to yyyy-mm-dd
+  const formatDate = (date) => {
+    if (!date) return ''
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const handleSearch = async () => {
+    try {
+      // Validate inputs
+      if (!filtersShipping.searchTerm.trim() && !filtersShipping.startDate && !filtersShipping.endDate) {
+        alert('Vui lòng nhập từ khóa tìm kiếm hoặc chọn khoảng thời gian')
+        return
+      }
+
+      let startDate = ''
+      let endDate = ''
+
+      if (filtersShipping.startDate && filtersShipping.endDate) {
+        startDate = formatDate(filtersShipping.startDate)
+        endDate = formatDate(filtersShipping.endDate)
+
+        // Validate date range
+        if (new Date(startDate) > new Date(endDate)) {
+          alert('Ngày bắt đầu không thể sau ngày kết thúc')
+          return
+        }
+      }
+
+      const searchParams = {
+        searchTerm: filtersShipping.searchTerm.trim(),
+        startDate,
+        endDate,
+      }
+
+      await searchShippingOrders(searchParams)
+    } catch (error) {
+      console.error('Search error:', error)
+      alert(error.message || 'Có lỗi xảy ra khi tìm kiếm')
+    }
+  }
+
+  const handleClearSearch = () => {
+    clearShippingSearch()
+    // Reset filters
+    updateShippingFilters({
+      searchTerm: '',
+      startDate: null,
+      endDate: null,
+    })
+  }
+
   const handleMouseEnter = (order, e) => {
     if (!containerRef.current) return
     console.log('Mouse enter', order)
@@ -86,7 +151,10 @@ const OrderShipping = () => {
 
   const Pagination = () => {
     const pageNumbers = []
-    const { currentPage, totalPages } = paginationShipping
+    // Use search pagination when in search mode, otherwise use regular pagination
+    const currentPagination = isSearchShippingMode ? searchShippingPagination : paginationShipping
+    const { currentPage, totalPages } = currentPagination
+    const handlePageChange = isSearchShippingMode ? changeSearchShippingPage : changeShippingPage
 
     let startPage = Math.max(1, currentPage - 2)
     let endPage = Math.min(totalPages, startPage + 4)
@@ -98,31 +166,31 @@ const OrderShipping = () => {
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(i)
     }
-
+    console.log(ordersShipping);
     return (
       <div className='mt-4 flex items-center justify-between'>
         <div>
           <span className='text-sm text-gray-700'>
             Hiển thị{' '}
             <span className='font-medium'>
-              {(currentPage - 1) * paginationShipping.pageSize + 1}
+              {(currentPage - 1) * currentPagination.pageSize + 1}
             </span>{' '}
             đến{' '}
             <span className='font-medium'>
               {Math.min(
-                currentPage * paginationShipping.pageSize,
-                paginationShipping.totalItems
+                currentPage * currentPagination.pageSize,
+                currentPagination.totalItems
               )}
             </span>{' '}
             trong tổng số{' '}
-            <span className='font-medium'>{paginationShipping.totalItems}</span>{' '}
-            đơn hàng
+            <span className='font-medium'>{currentPagination.totalItems}</span>{' '}
+            đơn hàng {isSearchShippingMode && <span className="text-blue-600">(kết quả tìm kiếm)</span>}
           </span>
         </div>
         <div>
           <nav className='flex items-center space-x-1'>
             <button
-              onClick={() => changeShippingPage(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className={`rounded px-2 py-1 ${currentPage === 1 ? 'cursor-not-allowed text-gray-400' : 'text-blue-600 hover:bg-blue-50'}`}
             >
@@ -132,7 +200,7 @@ const OrderShipping = () => {
             {pageNumbers.map(number => (
               <button
                 key={number}
-                onClick={() => changeShippingPage(number)}
+                onClick={() => handlePageChange(number)}
                 className={`rounded px-3 py-1 ${currentPage === number ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
               >
                 {number}
@@ -141,7 +209,7 @@ const OrderShipping = () => {
 
             <button
               onClick={() =>
-                changeShippingPage(Math.min(totalPages, currentPage + 1))
+                handlePageChange(Math.min(totalPages, currentPage + 1))
               }
               disabled={currentPage === totalPages}
               className={`rounded px-2 py-1 ${currentPage === totalPages ? 'cursor-not-allowed text-gray-400' : 'text-blue-600 hover:bg-blue-50'}`}
@@ -192,15 +260,15 @@ const OrderShipping = () => {
             <div>
               <p className='text-sm font-medium text-gray-700'>Mã đơn hàng:</p>
               <p className='text-sm text-gray-900'>
-                {order.orderNumber || order.id}
+                {order.orderCode || order.orderNumber || order.id}
               </p>
             </div>
             <div>
               <p className='text-sm font-medium text-gray-700'>Ngày đặt:</p>
               <p className='text-sm text-gray-900'>
-                {format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
+                {order.orderDate ? format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
                   locale: vi,
-                })}
+                }) : '—'}
               </p>
             </div>
             <div>
@@ -254,7 +322,7 @@ const OrderShipping = () => {
                       {new Intl.NumberFormat('vi-VN', {
                         style: 'currency',
                         currency: 'VND',
-                      }).format(item.productPrice || 0)}
+                      }).format(item.price || 0)}
                     </span>
                   </div>
                 </div>
@@ -282,7 +350,7 @@ const OrderShipping = () => {
                 {new Intl.NumberFormat('vi-VN', {
                   style: 'currency',
                   currency: 'VND',
-                }).format(order.totalPrice || 0)}
+                }).format(order.totalAmount || order.totalPrice || 0)}
               </span>
             </div>
           </div>
@@ -305,7 +373,7 @@ const OrderShipping = () => {
           {' '}
           {/* Chiều cao tương đương với một hàng có dữ liệu */}
           <td
-            colSpan='6'
+            colSpan='5'
             className='border-b border-gray-200 px-6 py-4 whitespace-nowrap'
           ></td>
         </tr>
@@ -313,9 +381,42 @@ const OrderShipping = () => {
   }
 
   return (
-    <div className='container mx-auto' ref={containerRef}>
+    <div className='relative container mx-auto' ref={containerRef}>
+      {/* Search Error Display */}
+      {searchShippingError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Search className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Lỗi tìm kiếm</h3>
+              <p className="mt-1 text-sm text-red-700">{searchShippingError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Results Summary */}
+      {isSearchShippingMode && !searchShippingLoading && !searchShippingError && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="flex items-center">
+            <Search className="h-5 w-5 text-blue-400 mr-2" />
+            <p className="text-sm text-blue-800">
+              Tìm thấy <strong>{searchShippingPagination.totalItems}</strong> đơn hàng
+              {filtersShipping.searchTerm && (
+                <span> với từ khóa "<strong>{filtersShipping.searchTerm}</strong>"</span>
+              )}
+              {filtersShipping.startDate && filtersShipping.endDate && (
+                <span> từ <strong>{formatDate(filtersShipping.startDate)}</strong> đến <strong>{formatDate(filtersShipping.endDate)}</strong></span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className='mb-6 rounded-lg bg-white p-4 shadow'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
           <div className='relative'>
             <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
               <Search className='h-4 w-4 text-gray-500' />
@@ -326,6 +427,7 @@ const OrderShipping = () => {
               value={filtersShipping.searchTerm}
               onChange={handleSearchChange}
               className='w-full rounded-md border border-gray-300 py-2 pr-4 pl-10 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
           </div>
 
@@ -346,6 +448,30 @@ const OrderShipping = () => {
                   : null,
               ]}
             />
+          </div>
+
+          <div className='flex items-center space-x-2'>
+            <button
+              onClick={handleSearch}
+              disabled={searchShippingLoading}
+              className='flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            >
+              {searchShippingLoading ? (
+                <Loader2 className='h-4 w-4 animate-spin mr-2' />
+              ) : (
+                <Search className='h-4 w-4 mr-2' />
+              )}
+              Tìm
+            </button>
+
+            {isSearchShippingMode && (
+              <button
+                onClick={handleClearSearch}
+                className='flex items-center justify-center px-3 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors'
+              >
+                Xóa
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -386,36 +512,38 @@ const OrderShipping = () => {
                   Phương thức thanh toán
                 </th>
                 <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Địa chỉ giao hàng
+                  Trạng thái thanh toán
                 </th>
                 <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Ghi chú
+                  Địa chỉ giao hàng
                 </th>
               </tr>
             </thead>
             <tbody className='divide-y divide-gray-200 bg-white'>
-              {loading ? (
+              {(isSearchShippingMode ? searchShippingLoading : loading) ? (
                 <tr>
                   <td colSpan='6' className='px-6 py-4 text-center'>
                     <Loader2 className='mx-auto h-6 w-6 animate-spin' />
-                    <p className='mt-2 text-gray-500'>Đang tải dữ liệu...</p>
+                    <p className='mt-2 text-gray-500'>
+                      {isSearchShippingMode ? 'Đang tìm kiếm...' : 'Đang tải dữ liệu...'}
+                    </p>
                   </td>
                 </tr>
-              ) : ordersShipping.length === 0 ? (
+              ) : (isSearchShippingMode ? searchShippingResults : ordersShipping).length === 0 ? (
                 <>
                   <tr>
                     <td
                       colSpan='6'
                       className='px-6 py-4 text-center text-gray-500'
                     >
-                      Không có đơn hàng nào
+                      {isSearchShippingMode ? 'Không tìm thấy đơn hàng nào' : 'Không có đơn hàng nào'}
                     </td>
                   </tr>
                   {renderEmptyRows()}
                 </>
               ) : (
                 <>
-                  {ordersShipping.map(order => (
+                  {(isSearchShippingMode ? searchShippingResults : ordersShipping).map(order => (
                     <tr
                       key={order.id}
                       className='hover:bg-blue-50'
@@ -425,27 +553,27 @@ const OrderShipping = () => {
                         className='px-6 py-4 text-sm font-medium whitespace-nowrap text-blue-600'
                         onMouseEnter={e => handleMouseEnter(order, e)}
                       >
-                        {order.orderNumber || order.id}
+                        {order.orderCode || order.orderNumber || order.id}
                       </td>
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                        {format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
+                        {order.orderDate ? format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
                           locale: vi,
-                        })}
+                        }) : '—'}
                       </td>
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
                         {new Intl.NumberFormat('vi-VN', {
                           style: 'currency',
                           currency: 'VND',
-                        }).format(order.totalPrice)}
+                        }).format(order.totalAmount || order.totalPrice || 0)}
                       </td>
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                        {order.paymentMethodName || order.paymentMethod}
+                        {order.payment?.method || order.paymentMethodName || order.paymentMethod || '—'}
                       </td>
-                      <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>
-                        {order.shippingAddress}
+                      <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
+                        {order.payment?.status || '—'}
                       </td>
-                      <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>
-                        {order.notes || '-'}
+                      <td className='px-6 py-4 text-sm text-gray-500 break-words'>
+                        {order.shippingAddress || '—'}
                       </td>
                     </tr>
                   ))}

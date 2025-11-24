@@ -51,16 +51,27 @@ class CookieService {
         return !!this.getAccessToken() && !!this.getRefreshToken();
     }
 
-    removeAccessTokens() {
-        Cookies.remove(TOKEN_KEYS.ACCESS_TOKEN);
-    }
-
     /**
      * Xóa tất cả auth tokens khỏi cookies (dùng khi logout)
      */
     removeAuthTokens() {
         Cookies.remove(TOKEN_KEYS.ACCESS_TOKEN);
         Cookies.remove(TOKEN_KEYS.REFRESH_TOKEN);
+    }
+
+    /**
+     * Debug method to check token status
+     */
+    debugTokens() {
+        const accessToken = this.getAccessToken();
+        const refreshToken = this.getRefreshToken();
+        console.log('Debug Tokens:', {
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken,
+            accessTokenLength: accessToken ? accessToken.length : 0,
+            refreshTokenLength: refreshToken ? refreshToken.length : 0
+        });
+        return { accessToken, refreshToken };
     }
 }
 

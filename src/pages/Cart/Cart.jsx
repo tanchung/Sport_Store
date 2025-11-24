@@ -82,6 +82,21 @@ const Cart = () => {
   const handleCheckedItemsChange = newChecked => {
     setCheckedItems(newChecked)
   }
+  const toggleItemSelection = async (item) => {
+    try {
+      const updated = items.map(i => i.id === item.id ? { ...i, selected: !i.selected } : i)
+      setItems(updated)
+      // Persist to backend
+      await CartService.updateCartItemSelection(item.id, !item.selected)
+      // Update checkedItems used for totals
+      const newChecked = !item.selected
+        ? [...checkedItems, { ...item, selected: true }]
+        : checkedItems.filter(ci => ci.id !== item.id)
+      setCheckedItems(newChecked)
+    } catch (e) {
+      message.error('Không thể cập nhật lựa chọn sản phẩm. Vui lòng thử lại!')
+    }
+  }
 
   const grandTotal = subTotal + shipping
 
@@ -111,6 +126,7 @@ const Cart = () => {
                   handleRemoveItem={handleRemoveItem}
                   checkedItems={checkedItems}
                   onCheckedItemsChange={handleCheckedItemsChange}
+                  onToggleItemSelection={toggleItemSelection}
                 />
               </div>
 

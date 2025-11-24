@@ -7,9 +7,13 @@ export default {
   server: {
     proxy: {
       '/api': {
-        target: 'http://milkstore-grbpfnduezbpgvgc.eastasia-01.azurewebsites.net',
+        target: 'https://unrealistic-elton-denunciable.ngrok-free.dev',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+          'Origin': 'https://unrealistic-elton-denunciable.ngrok-free.dev'
+        }
       }
     }
   },

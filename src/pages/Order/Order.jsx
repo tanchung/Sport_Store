@@ -11,12 +11,19 @@ import OrderPending from './Pending'
 import OrderConfirmed from './Confirmed'
 import OrderShipping from './Shipping'
 import OrderProcessing from './Processing'
+import OrderCancelRequested from './CancelRequested'
+import SearchForm from './Components/SearchForm'
 import { useOrderStore } from './OrderStore'
 
 const items = [
   {
     label: 'Chờ xác nhận',
     key: 'PENDING',
+    icon: <MailOutlined />,
+  },
+  {
+    label: 'Chờ xác nhận hủy',
+    key: 'CANCEL_REQUESTED',
     icon: <MailOutlined />,
   },
   {
@@ -80,6 +87,8 @@ const Order = () => {
     switch (current) {
       case 'PENDING':
         return <OrderPending />
+      case 'CANCEL_REQUESTED':
+        return <OrderCancelRequested />
       case 'PROCESSING':
         return <OrderProcessing />
       case 'CONFIRMED':
@@ -111,10 +120,19 @@ const Order = () => {
           padding: '20px',
           width: '100%',
           display: 'flex',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
-        {renderContent()}
+        {/* Search Form - Always visible */}
+        <div style={{ width: '100%', maxWidth: '1200px', marginBottom: '20px' }}>
+          <SearchForm />
+        </div>
+
+        {/* Order Content */}
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          {renderContent()}
+        </div>
       </div>
     </div>
   )

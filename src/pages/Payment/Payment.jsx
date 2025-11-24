@@ -8,6 +8,7 @@ import OrderService from '@services/Order/OrderService'
 import CartService from '@services/Cart/CartService'
 import PaymentService from '@services/Payment/PaymentService'
 import { message } from 'antd'
+import { resolveSizeNameForItems } from '../../utils/sizeName'
 
 const Payment = () => {
   const location = useLocation()
@@ -19,6 +20,9 @@ const Payment = () => {
   const [searchParams] = useSearchParams()
   const [checkStatusPayment, setCheckStatusPayment] = useState(false)
   const [orderNumber, setOrderNumber] = useState(null)
+  const [orderId, setOrderId] = useState(null)
+  const [confirmItems, setConfirmItems] = useState([])
+  const [confirmOrder, setConfirmOrder] = useState(null)
 
   // Get form data from location state
   const formData = location.state?.formData || {}
@@ -53,17 +57,25 @@ const Payment = () => {
 
   useEffect(() => {
     if (voucher) {
-      if (order?.total < voucher.minOrder) {
+      const minOrder = voucher.minOrder ?? voucher.minOrderAmount ?? 0
+      if ((order?.total || order?.subtotal || 0) < minOrder) {
         setVoucher(null)
         message.error(
-          `Đơn hàng tối thiểu để áp dụng mã giảm giá là ${formatPrice(voucher?.minOrder || 0)}`
+          `Đơn hàng tối thiểu để áp dụng mã giảm giá là ${formatPrice(minOrder)}`
         )
         return
       }
-      const calculatedDiscount =
-        (order?.subtotal * (voucher.discount || 0)) / 100
-      if (voucher.maxDiscount && calculatedDiscount > voucher.maxDiscount) {
-        setDiscountValue(voucher.maxDiscount)
+      const isPercent = voucher.isPercentage ?? voucher.percentTage ?? false
+      const amount = voucher.discount ?? voucher.discountAmount ?? 0
+      let calculatedDiscount = 0
+      if (isPercent) {
+        calculatedDiscount = ((order?.subtotal || order?.total || 0) * amount) / 100
+      } else {
+        calculatedDiscount = amount
+      }
+      const maxDiscount = voucher.maxDiscount ?? voucher.maxDiscountAmount
+      if (maxDiscount && calculatedDiscount > maxDiscount) {
+        setDiscountValue(maxDiscount)
       } else {
         setDiscountValue(calculatedDiscount)
       }
@@ -82,22 +94,36 @@ const Payment = () => {
   const handleProcessPayment = () => {
     setCheckStatusPayment(true)
     setIsProcessing(true)
-    const orderData = {
-      shippingAddress: formData.state + ', ' + formData.city,
-      shippingFee: order.shipping,
-      paymentMethod: paymentMethod.toUpperCase(),
-      notes: '',
-      voucherCodes: voucher?.code ? [voucher.code] : [],
-      orderDetails: order.items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    }
-    // Call OrderService to create order
-    OrderService.createOrder(orderData)
+
+    // Create order in backend for current user from cart selection
+    OrderService.createOrder()
       .then(async response => {
         if (response) {
           console.log('Order created successfully:', response)
+          setOrderId(response.data.id || response.data.orderId)
+          setOrderNumber(response.data.orderNumber || `ORD-${response.data.id}`)
+          setConfirmOrder(response.data)
+
+          // Apply voucher to order if selected
+          if (voucher?.id) {
+            try {
+              await OrderService.applyVoucher(response.data.id, voucher.id)
+            } catch (e) {
+              console.warn('Không áp dụng được voucher:', e)
+              message.warning('Không áp dụng được voucher. Vui lòng kiểm tra lại mã giảm giá.')
+            }
+          }
+
+          // fetch order details for display
+          try {
+            const orderRes = await OrderService.getOrderById(response.data.id)
+            setConfirmOrder(orderRes.data)
+            const rawItems = orderRes.data.orderItems || orderRes.data.orderDetails || []
+            const enriched = await resolveSizeNameForItems(rawItems)
+            setConfirmItems(enriched)
+          } catch (e) {
+            console.warn('Could not fetch order details', e)
+          }
           if (paymentMethod.toUpperCase() === 'PAYOS') {
             const payosRes = await PaymentService.createPaymentPayos({
               orderId: response.data.orderId,
@@ -141,8 +167,16 @@ const Payment = () => {
       })
   }
 
-  const handleApplyVoucher = voucherObj => {
+  const handleApplyVoucher = async voucherObj => {
     setVoucher(voucherObj)
+    if (!voucherObj) return;
+    try {
+      // Create a temporary order to apply voucher requires orderId; our backend applies voucher to an existing order
+      // Here we assume createOrder has been called or we only validate on submit; for simplicity, just compute discount locally
+      // If you want to validate with backend, call OrderService.testApplyVoucher(orderId, voucherObj.id)
+    } catch (e) {
+      console.warn('Voucher apply validation failed', e)
+    }
   }
 
   return (
@@ -155,7 +189,7 @@ const Payment = () => {
         <div
           className='absolute inset-0'
           style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%), 
+            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
                          radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.08) 0%, transparent 50%)`,
           }}
         ></div>
@@ -300,15 +334,13 @@ const Payment = () => {
                 <span>🧾</span>
                 <span>Mã giao dịch:</span>
                 <span className="text-blue-600 font-bold">
-                  {searchParams.get('orderCode')
-                    ? "ORD-" + searchParams.get('orderCode')
-                    : orderNumber || '---'}
+                  {orderNumber || (searchParams.get('orderCode') ? "ORD-" + searchParams.get('orderCode') : '---')}
                 </span>
               </div>
-              {/* <div className="mt-2 text-sm text-gray-500">
+              <div className="mt-2 text-sm text-gray-500">
                 Tổng tiền:&nbsp;
                 <span className="font-semibold text-gray-800">
-                  {formatPrice(order?.total || 0)}
+                  {formatPrice((order?.total || 0) - discountValue)}
                 </span>
               </div>
               <div className="mt-1 text-sm text-gray-500">
@@ -316,7 +348,24 @@ const Payment = () => {
                 <span className="font-semibold text-gray-800 capitalize">
                   {paymentMethod === 'PAYOS' ? 'PayOS' : 'Thanh toán khi nhận hàng'}
                 </span>
-              </div> */}
+              </div>
+
+              {/* Danh sách sản phẩm đã đặt */}
+              {confirmItems && confirmItems.length > 0 && (
+                <div className='mt-4 w-full text-left'>
+                  <div className='mb-2 text-sm font-semibold text-gray-700'>Sản phẩm đã đặt</div>
+                  <ul className='space-y-1 text-sm text-gray-700'>
+                    {confirmItems.map((it, idx) => (
+                      <li key={idx} className='flex justify-between'>
+                        <span>{`${it.productName || it.name || 'Sản phẩm'} - ${it.sizeName || ('Size ' + (it.sizeId || ''))}`}</span>
+                        <span>x{it.quantity}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
             </div>
             {/* Trạng thái */}
             {isProcessing && (
@@ -367,7 +416,7 @@ const Payment = () => {
               </button>
             </div>
           </div>
-        </div>
+        // </div>
       )}
     </div>
   )

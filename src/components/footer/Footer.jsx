@@ -3,18 +3,18 @@ import { FaFacebookF, FaPhone, FaShieldAlt, FaMapMarkerAlt } from 'react-icons/f
 import { SiHappycow } from "react-icons/si";
 import { IoMdMail } from "react-icons/io";
 import { MdOutlineCategory, MdInfo, MdSupportAgent } from "react-icons/md";
+import { IoMdFootball } from "react-icons/io";
 import { FaTruckFast } from "react-icons/fa6";
 import GHN from '/src/assets/GHN.webp'
 import EMS from '/src/assets/ems.png'
 import zalo from '/src/assets/zalo.webp'
 import face from '/src/assets/facebook.png'
-
 const Footer = () => {
   return (
     <footer className='relative overflow-hidden bg-gray-800 text-white'>
       {/* Icon HappyCow - góc dưới bên phải, kích thước lớn */}
       <div className='absolute -bottom-8 -left-20 opacity-30'>
-        <SiHappycow className="text-[180px] md:text-[250px] lg:text-[320px] text-blue-200" />
+        <IoMdFootball className="text-[180px] md:text-[250px] lg:text-[320px] text-blue-200" />
       </div>
 
       {/* Main content */}
@@ -29,7 +29,7 @@ const Footer = () => {
               </h3>
             </div>
             <ul className='space-y-3'>
-              {['Sữa bột', 'Sữa tươi', 'Sữa hạt', 'Thực phẩm bổ sung'].map((item, index) => (
+              {['Giày sân nhân tạo', 'Giày cỏ tự nhiên', 'Giày Futsal', 'Phụ kiện'].map((item, index) => (
                 <li key={index}>
                   <a href='#' className='text-gray-300 hover:text-blue-300 flex items-center'>
                     <span className='w-1.5 h-1.5 bg-blue-400 rounded-full mr-2'></span>

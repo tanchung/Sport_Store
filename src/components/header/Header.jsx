@@ -5,7 +5,7 @@ import { FiShoppingCart, FiUser, FiLogOut, FiInfo, FiClock, FiTag } from 'react-
 import { useAuth } from '../../context/AuthContext';
 import { message } from 'antd';
 import { useCartCount } from '@/hooks/useCart';
-
+import logo from '/src/assets/logogiay.png'
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -67,9 +67,10 @@ const Header = () => {
           {/* logo */}
           <Link to='/' className='flex items-center'>
             <div className='relative'>
-              <span className='absolute -top-2 -left-1 text-4xl'>🥛</span>
-              <h1 className='ml-9 text-2xl font-extrabold tracking-wide text-blue-700 sm:text-3xl'>
-                Milk<span className='text-blue-500'>Store</span>
+              <span className='absolute -top-4 -left-1 text-4xl'><img src={logo} className='h-16 w-18' alt="Zalo" /></span>
+              <h1 className='ml-16 text-2xl font-extrabold tracking-wide text-blue-500 sm:text-3xl'>
+                VAN<span className='text-blue-700'>HIEU</span>
+                <br />
               </h1>
             </div>
           </Link>

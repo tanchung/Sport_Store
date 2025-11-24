@@ -35,8 +35,8 @@ const ProductCard = ({ product }) => {
     e.stopPropagation()
     try {
       if (isAuthenticated) {
-        addCart(product.id, 1)
-        navigate('/gio-hang')
+        // Redirect to product detail to select size before adding to cart
+        navigate(`/san-pham/${product.id}`, { state: { product, from: 'list-add-to-cart' } })
       } else {
         message.error('Vui lòng đăng nhập để mua sản phẩm')
       }

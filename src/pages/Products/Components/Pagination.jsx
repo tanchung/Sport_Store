@@ -8,10 +8,25 @@ const Pagination = ({
   itemsPerPage,
   totalItems,
   hasPrevious,
-  hasNext
+  hasNext,
+  loading = false
 }) => {
+  // Debug pagination data
+  console.log('🔍 Pagination Debug:', {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    hasPrevious,
+    hasNext,
+    loading
+  });
+
   // If there's only one page, don't show pagination
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    console.log('⚠️ Pagination hidden: totalPages =', totalPages);
+    return null;
+  }
 
   // Calculate the range of pages to show
   const getVisiblePages = () => {
@@ -40,6 +55,11 @@ const Pagination = ({
 
   const visiblePages = getVisiblePages();
 
+  // Debug visible pages
+  console.log('📄 Visible Pages:', visiblePages);
+  console.log('🎯 Should show first page button:', visiblePages[0] > 1);
+  console.log('🎯 Should show last page button:', visiblePages[visiblePages.length - 1] < totalPages);
+
   // Pagination stats
   const start = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
   const end = Math.min(currentPage * itemsPerPage, totalItems);
@@ -54,12 +74,12 @@ const Pagination = ({
       <div className="flex items-center justify-center gap-1">
         {/* Previous page button */}
         <button
-          onClick={() => hasPrevious && onPageChange(currentPage - 1)}
-          disabled={!hasPrevious}
-          className={`px-3 py-1 rounded-md ${
-            hasPrevious
-              ? 'text-gray-700 hover:bg-gray-200'
-              : 'text-gray-400 cursor-not-allowed'
+          onClick={() => hasPrevious && !loading && onPageChange(currentPage - 1)}
+          disabled={!hasPrevious || loading}
+          className={`px-3 py-1 rounded-md border ${
+            hasPrevious && !loading
+              ? 'text-blue-600 hover:bg-blue-50 border-blue-300'
+              : 'text-gray-400 cursor-not-allowed border-gray-300 bg-gray-50'
           }`}
           aria-label="Trang trước"
         >
@@ -70,8 +90,13 @@ const Pagination = ({
         {visiblePages[0] > 1 && (
           <>
             <button
-              onClick={() => onPageChange(1)}
-              className="px-3 py-1 rounded-md hover:bg-gray-200 text-gray-700"
+              onClick={() => !loading && onPageChange(1)}
+              disabled={loading}
+              className={`px-3 py-1 rounded-md border font-medium ${
+                loading
+                  ? 'text-gray-400 cursor-not-allowed border-gray-300 bg-gray-50'
+                  : 'text-blue-600 hover:bg-blue-50 border-blue-300'
+              }`}
               aria-label="Trang đầu tiên"
             >
               1
@@ -86,11 +111,14 @@ const Pagination = ({
         {visiblePages.map(page => (
           <button
             key={page}
-            onClick={() => onPageChange(page)}
-            className={`px-3 py-1 rounded-md ${
+            onClick={() => !loading && onPageChange(page)}
+            disabled={loading}
+            className={`px-3 py-1 rounded-md border font-medium ${
               currentPage === page
-                ? 'bg-blue-600 text-white font-medium'
-                : 'text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : loading
+                ? 'text-gray-400 cursor-not-allowed border-gray-300 bg-gray-50'
+                : 'text-blue-600 hover:bg-blue-50 border-blue-300'
             }`}
             aria-label={`Trang ${page}`}
             aria-current={currentPage === page ? 'page' : undefined}
@@ -106,8 +134,13 @@ const Pagination = ({
               <span className="px-2 py-1 text-gray-400">...</span>
             )}
             <button
-              onClick={() => onPageChange(totalPages)}
-              className="px-3 py-1 rounded-md hover:bg-gray-200 text-gray-700"
+              onClick={() => !loading && onPageChange(totalPages)}
+              disabled={loading}
+              className={`px-3 py-1 rounded-md border font-medium ${
+                loading
+                  ? 'text-gray-400 cursor-not-allowed border-gray-300 bg-gray-50'
+                  : 'text-blue-600 hover:bg-blue-50 border-blue-300'
+              }`}
               aria-label="Trang cuối cùng"
             >
               {totalPages}
@@ -117,12 +150,12 @@ const Pagination = ({
 
         {/* Next page button */}
         <button
-          onClick={() => hasNext && onPageChange(currentPage + 1)}
-          disabled={!hasNext}
-          className={`px-3 py-1 rounded-md ${
-            hasNext
-              ? 'text-gray-700 hover:bg-gray-200'
-              : 'text-gray-400 cursor-not-allowed'
+          onClick={() => hasNext && !loading && onPageChange(currentPage + 1)}
+          disabled={!hasNext || loading}
+          className={`px-3 py-1 rounded-md border ${
+            hasNext && !loading
+              ? 'text-blue-600 hover:bg-blue-50 border-blue-300'
+              : 'text-gray-400 cursor-not-allowed border-gray-300 bg-gray-50'
           }`}
           aria-label="Trang kế tiếp"
         >

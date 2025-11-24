@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useOrderStore } from './OrderStore'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -27,12 +27,19 @@ const OrderWaiting = () => {
     updateWaitingFilters,
     changeWaitingPage,
     changeWaitingPageSize,
+    cancelOrder,
+    fetchOrdersWaiting
   } = useOrderStore()
 
   const [hoveredOrder, setHoveredOrder] = useState(null)
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
 
   const containerRef = useRef(null)
+
+  // Tự động tải dữ liệu khi component mount
+  useEffect(() => {
+    fetchOrdersWaiting()
+  }, [fetchOrdersWaiting])
 
   const handleSearchChange = e => {
     const searchTerm = e.target.value
@@ -253,7 +260,7 @@ const OrderWaiting = () => {
                       {new Intl.NumberFormat('vi-VN', {
                         style: 'currency',
                         currency: 'VND',
-                      }).format(item.productPrice || 0)}
+                      }).format(item.price || 0)}
                     </span>
                   </div>
                 </div>
@@ -436,7 +443,7 @@ const OrderWaiting = () => {
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
                         {order.paymentMethodName || order.paymentMethod}
                       </td>
-                      <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>
+                      <td className='px-6 py-4 text-sm text-gray-500 break-words'>
                         {order.shippingAddress}
                       </td>
                       <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>

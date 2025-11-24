@@ -1,45 +1,40 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Form, message, Steps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import RegisterForm from './components/RegisterForm';
 import OtpModal from './components/OtpModal';
 import { useAuth } from '../../../context/AuthContext';
-import { motion } from 'framer-motion';
+import AuthService from '../../../services/Auth/AuthServices';
+import dayjs from 'dayjs';
 
 function Register() {
-  const { register, sendOtp } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [otpModalVisible, setOtpModalVisible] = useState(false);
   const [otp, setOtp] = useState('');
   const [email, setEmail] = useState('');
-  const [formData, setFormData] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [canResendOtp, setCanResendOtp] = useState(true);
   const [resendCountdown, setResendCountdown] = useState(0);
 
-  const handleSendOtp = async (emailToSend = null) => {
-    const emailAddress = emailToSend || email;
-
-    if (!emailAddress) {
-      message.error('Vui lòng nhập email!');
+  // Gửi lại OTP
+  const handleResendOtp = async () => {
+    if (!email) {
+      message.error('Email không hợp lệ!');
       return false;
     }
 
     setLoading(true);
     try {
-      const response = await sendOtp(emailAddress);
-
-      if (response.success) {
-        message.success('Mã OTP đã được gửi đến email của bạn!');
-        setEmail(emailAddress);
-        setOtpModalVisible(true);
-        setCurrentStep(1);
-
+      const response = await AuthService.resendEmail(email);
+      
+      if (response.data.success) {
+        message.success('Mã OTP đã được gửi lại đến email của bạn!');
+        
+        // Start countdown
         setCanResendOtp(false);
         setResendCountdown(60);
-
         const timer = setInterval(() => {
           setResendCountdown((prev) => {
             if (prev <= 1) {
@@ -53,23 +48,11 @@ function Register() {
 
         return true;
       }
-      message.error(response.error);
+      message.error('Không thể gửi lại mã OTP');
       return false;
     } catch (error) {
       console.error('Lỗi gửi OTP:', error);
-      if (error.response) {
-        console.log('Error response data:', error.response.data);
-
-        if (error.response?.data?.message) {
-          message.error(error.response.data.message);
-        } else {
-          message.error('Không thể gửi mã OTP, vui lòng thử lại sau');
-        }
-      } else if (error.request) {
-        message.error('Không nhận được phản hồi từ server');
-      } else {
-        message.error('Lỗi khi thiết lập yêu cầu');
-      }
+      message.error(error.response?.data?.message || 'Không thể gửi mã OTP, vui lòng thử lại sau');
       return false;
     } finally {
       setLoading(false);
@@ -78,95 +61,92 @@ function Register() {
 
   // Xác thực OTP
   const handleVerifyOtp = async () => {
-    if (!otp || !email || !formData) {
+    if (!otp || !email) {
       message.error('Vui lòng nhập mã OTP');
       return;
     }
 
     setLoading(true);
     try {
-      // Dữ liệu gửi đi để xác thực OTP
-      const requestData = {
-        username: formData.username,
-        password: formData.password,
-        confirmPassword: formData.password,
+      const verifyData = {
         email: email,
-        otp: otp,
-        surname: formData.lastName,
-        middlename: formData.middleName || "",
-        firstname: formData.firstName,
-        phoneNumber: formData.phone,
-        address: formData.address || "",
-        avatar: "",
-        dob: new Date().toISOString(),
-        gender: formData.gender || "Nam"
+        verificationCode: otp
       };
 
-      console.log("Verifying OTP with data:", requestData);
+      console.log('Verifying OTP:', verifyData);
+      const response = await AuthService.verifyCode(verifyData);
 
-      const response = await register(requestData);
-
-      if (response.success) {
-        message.success('Đăng ký thành công!');
+      if (response.data.success) {
+        message.success('Xác thực thành công! Bạn có thể đăng nhập.');
         setOtpModalVisible(false);
+        setCurrentStep(0);
         navigate('/dang-nhap');
+      } else {
+        message.error('Mã OTP không hợp lệ');
       }
     } catch (error) {
       console.error('Lỗi xác thực OTP:', error);
-      // Log thêm chi tiết lỗi
-      if (error.response) {
-        console.log('Error response data:', error.response.data);
-
-        if (error.response?.data?.message) {
-          message.error(error.response.data.message);
-        } else if (error.response?.data?.errors) {
-          // Xử lý lỗi validation từ ASP.NET
-          const errorMessages = Object.values(error.response.data.errors)
-            .flat()
-            .join(', ');
-          message.error(errorMessages);
-        } else {
-          message.error('Mã OTP không hợp lệ');
-        }
-      } else {
-        message.error('Xác thực OTP thất bại, vui lòng thử lại sau');
-      }
+      message.error(error.response?.data?.message || 'Mã OTP không hợp lệ');
     } finally {
       setLoading(false);
     }
   };
 
-  // Xử lý submit form
+  // Xử lý submit form - Gọi API signup
   const onFinish = async (values) => {
-    // Kiểm tra mật khẩu khớp
     if (values.password !== values.confirmPassword) {
       message.error('Mật khẩu không khớp!');
       return;
     }
 
-    // Kiểm tra đồng ý điều khoản
     if (!values.agreement) {
       message.error('Vui lòng chấp nhận điều khoản sử dụng');
       return;
     }
 
-    // Chuẩn bị dữ liệu
-    const userData = {
-      username: values.username,
-      email: values.email,
-      password: values.password,
-      lastName: values.lastName,
-      middleName: values.middleName || "",
-      firstName: values.firstName,
-      phone: values.phone,
-      address: values.address || "",
-      gender: values.gender || "Nam"
-    };
+    setLoading(true);
+    try {
+      // Format ngày sinh theo định dạng backend yêu cầu
+      const formattedDateOfBirth = values.dateOfBirth 
+        ? dayjs(values.dateOfBirth).format('YYYY-MM-DD')
+        : '2000-01-01';
 
-    setFormData(userData);
+      const registrationData = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        phone: values.phone,
+        avatar: "https://example.com/images/default-avatar.png",
+        permanentAddress: values.address || "",
+        gender: values.gender || "nam",
+        dateOfBirth: formattedDateOfBirth,
+        email: values.email,
+        username: values.username,
+        password: values.password
+      };
 
-    // Gửi OTP đến email
-    await handleSendOtp(values.email);
+      console.log('Đăng ký với data:', registrationData);
+      
+      // Bước 1: Gọi API signup - Backend tự động gửi OTP
+      const response = await AuthService.signup(registrationData);
+
+      if (response.data.success) {
+        console.log('User đã tạo (checked=false):', response.data.user);
+        message.success('Đăng ký thành công! Mã OTP đã được gửi đến email của bạn.');
+        
+        // Lưu email và chuyển sang bước OTP
+        setEmail(values.email);
+        setCurrentStep(1);
+        setOtpModalVisible(true);
+        
+      } else {
+        message.error(response.data.message || 'Đăng ký thất bại');
+      }
+    } catch (error) {
+      console.error('Lỗi đăng ký:', error);
+      message.error(error.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại sau');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -174,56 +154,10 @@ function Register() {
     message.error('Vui lòng kiểm tra lại thông tin đăng ký');
   };
 
-  // Hiệu ứng animation
-  const milkVariants = {
-    initial: { opacity: 0 },
-    animate: {
-      opacity: [0, 0.3, 0],
-      transition: {
-        duration: 8,
-        repeat: Infinity,
-        repeatDelay: 2,
-        ease: "easeInOut"
-      }
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background animations */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bg-white rounded-full"
-            style={{
-              width: `${100 + Math.random() * 200}px`,
-              height: `${100 + Math.random() * 200}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              filter: 'blur(30px)',
-              opacity: 0.2
-            }}
-            variants={milkVariants}
-            initial="initial"
-            animate="animate"
-            transition={{
-              delay: Math.random() * 5,
-              duration: 10 + Math.random() * 10
-            }}
-          />
-        ))}
-
-        {/* Các motion.div khác cho hiệu ứng nền... */}
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
       {/* Main content */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-white/20 mt-16"
-      >
+      <div className="w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-white/20 mt-16">
         {/* Left side - Form */}
         <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col">
           <div className="mb-6">
@@ -252,14 +186,12 @@ function Register() {
           {/* Login link */}
           <div className="mt-4 text-center">
             <span className="text-gray-600 text-sm mr-2">Đã có tài khoản?</span>
-            <motion.button
+            <button
               onClick={() => navigate('/dang-nhap')}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
               className="text-[#219ebc] hover:text-[#023047] font-medium text-sm transition duration-200"
             >
               Đăng nhập ngay
-            </motion.button>
+            </button>
           </div>
         </div>
 
@@ -272,18 +204,13 @@ function Register() {
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-white text-center p-6"
-            >
-              <h2 className="text-2xl font-bold mb-2 text-shadow">Sản phẩm sữa tươi ngon</h2>
-              <p className="text-shadow">Chất lượng cao, giao hàng tận nơi</p>
-            </motion.div>
+            <div className="text-white text-center p-6">
+              <h2 className="text-2xl font-bold mb-2">Sản phẩm sữa tươi ngon</h2>
+              <p>Chất lượng cao, giao hàng tận nơi</p>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* OTP Modal */}
       <OtpModal
@@ -291,6 +218,7 @@ function Register() {
         onCancel={() => {
           setOtpModalVisible(false);
           setCurrentStep(0);
+          setOtp('');
         }}
         onOk={handleVerifyOtp}
         email={email}
@@ -298,7 +226,7 @@ function Register() {
         setOtp={setOtp}
         canResendOtp={canResendOtp}
         resendCountdown={resendCountdown}
-        onResendOtp={() => handleSendOtp()}
+        onResendOtp={handleResendOtp}
         loading={loading}
       />
     </div>

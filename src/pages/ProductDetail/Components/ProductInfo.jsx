@@ -1,24 +1,48 @@
 import { message } from 'antd'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FiMinus, FiPlus, FiShoppingCart } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useProductStore } from '../../Products/ProductStore'
+import ProductSizeService from '@services/ProductSize/ProductSizeService'
+import ProductSizeSelector from './ProductSizeSelector'
 
 const ProductInfo = ({ product }) => {
   const [quantity, setQuantity] = useState(1)
+  const [sizes, setSizes] = useState([])
+  const [selectedSizeId, setSelectedSizeId] = useState(null)
   const { addCart } = useProductStore()
   const { isAuthenticated } = useAuth()
   const [shipping] = useState(20000)
   const navigate = useNavigate()
-  
+
+  useEffect(() => {
+    const loadSizes = async () => {
+      try {
+        const res = await ProductSizeService.getByProductId(product.id)
+        setSizes(res)
+        if (res && res.length > 0) {
+          setSelectedSizeId(res[0].id)
+        }
+        console.log('Loaded product sizes:', res.map(s => ({ id: s.id, name: s.sizeName })))
+      } catch (err) {
+        console.warn('No sizes found for product or failed to fetch sizes', err)
+      }
+    }
+    if (product?.id) loadSizes()
+  }, [product?.id])
+
   const increaseQuantity = () => setQuantity(prev => prev + 1)
   const decreaseQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1))
-  
+
   const handleAddToCart = () => {
     try {
       if (isAuthenticated) {
-        addCart(product.id, quantity)
+        if (!selectedSizeId) {
+          message.warning('Vui lòng chọn kích thước sản phẩm')
+          return
+        }
+        addCart(product.id, quantity, selectedSizeId)
         navigate('/gio-hang')
       } else {
         message.error('Vui lòng đăng nhập để mua sản phẩm')
@@ -112,6 +136,9 @@ const ProductInfo = ({ product }) => {
           </span>
         )}
       </div>
+
+      {/* Size selection */}
+      <ProductSizeSelector sizes={sizes} selectedSizeId={selectedSizeId} onChange={setSelectedSizeId} />
 
       <div className='flex items-center'>
         <span className='mr-4 font-medium text-gray-700'>Số lượng:</span>

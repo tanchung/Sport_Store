@@ -1,26 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react'
 import VoucherService from '@services/Voucher/VoucherService'
+import { useAuth } from '../../../context/AuthContext'
+import { message } from 'antd'
 
 const VoucherBox = ({ onApply }) => {
   const [voucherInput, setVoucherInput] = useState('')
   const [listVoucher, setListVoucher] = useState([])
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef()
+  const { currentUser, isAuthenticated, loading: authLoading } = useAuth()
+
+  const userId = currentUser?.id
+  const ready = isAuthenticated && !!userId && !authLoading
 
   useEffect(() => {
+    if (!ready) {
+      setListVoucher([])
+      return
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       fetchVouchers(voucherInput)
     }, 400)
     return () => clearTimeout(debounceRef.current)
     // eslint-disable-next-line
-  }, [voucherInput])
+  }, [voucherInput, ready, userId])
 
   const fetchVouchers = async (SearchTerm = null) => {
+    if (!ready) return
     setLoading(true)
     try {
-      const response = await VoucherService.getVouchersUser({ SearchTerm })
-      setListVoucher(response.items || [])
+      const all = await VoucherService.getUserVouchers(userId)
+      const filtered = SearchTerm
+        ? all.filter(v => v.code.toLowerCase().includes(SearchTerm.toLowerCase()))
+        : all
+      setListVoucher(filtered)
     } catch (error) {
       setListVoucher([])
       console.error('Failed to fetch vouchers:', error)
@@ -29,14 +43,20 @@ const VoucherBox = ({ onApply }) => {
   }
 
   const handleApply = () => {
+    if (!ready) {
+      message.warning('Vui lòng đăng nhập để áp dụng voucher')
+      return
+    }
     const found = listVoucher.find(v => v.code === voucherInput)
-    if (onApply) onApply(found || null)
+    if (!found) {
+      message.warning('Mã voucher không hợp lệ hoặc không thuộc sở hữu của bạn')
+      return
+    }
+    if (onApply) onApply(found)
   }
 
   const handleSelectVoucher = code => {
     setVoucherInput(code)
-    // const found = listVoucher.find(v => v.code === code);
-    // if (onApply) onApply(found || null);
   }
 
   return (

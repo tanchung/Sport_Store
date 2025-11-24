@@ -3,36 +3,22 @@ import api from '@services/apiClient';
 class CouponService {
     static async getUserCouponPoints(userId) {
         try {
-            const headers = {
-                'Content-Type': 'application/json',
-            };
-            const response = await api.get(`/Coupon/current-points/${userId}`, {}, headers);
-            const coupons = response.data.data
-            return coupons;
+            // Backend shopping_cart doesn't have Coupon endpoints
+            // Return mock data or throw error
+            console.warn('Coupon service not available in shopping_cart backend');
+            return 0; // Return 0 points
         } catch (error) {
             console.error('Error fetching coupons:', error);
-            return [];
+            return 0;
         }
     }
 
     static async getExchangeableVouchers(){
         try {
-            const headers = {
-                'Content-Type': 'application/json',
-            };
-            const response = await api.get('/Coupon/available-vouchers', {}, headers);
-            const coupons = response.data.data.map(item => ({
-                id: item.voucherId,
-                code: item.code,
-                discount: item.discountValue,
-                discountType: item.discountType,
-                startDate: item.startDate,
-                endDate: item.endDate,
-                minOrder: item.minOrder,
-                maxDiscount: item.maxDiscount,
-                pointsRequired: item.pointsRequired,
-            }));
-            return coupons;
+            // Backend shopping_cart doesn't have Coupon endpoints
+            // Return empty array or use voucher service instead
+            console.warn('Coupon service not available in shopping_cart backend');
+            return [];
         } catch (error) {
             console.error('Error fetching coupons:', error);
             return [];
@@ -41,14 +27,10 @@ class CouponService {
 
     static async exchangeVoucher(voucherId) {
         try {
-            const headers = {
-                'Content-Type': 'application/json',
-            };
-            const params = {
-                voucherId,
-            };
-            const response = await api.post(`/Coupon/redeem`, params, headers);
-            return response.data;
+            // Backend shopping_cart doesn't have Coupon endpoints
+            // Return false or throw error
+            console.warn('Coupon service not available in shopping_cart backend');
+            throw new Error('Coupon exchange not available in shopping_cart backend');
         } catch (error) {
             console.error('Error exchanging voucher:', error);
             return false;

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Page Updates - API Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .update-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+        .update-section h2 {
+            color: #28a745;
+            margin-top: 0;
+        }
+        .implementation-box {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .api-flow {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .checklist li:before {
+            content: "✅ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        .endpoint-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Profile Page Updates - API Integration</h1>
+    <p><strong>Update Date:</strong> <span id="current-date"></span></p>
+
+    <div class="update-section">
+        <h2>🆕 New API Endpoints Integration</h2>
+        <div class="implementation-box">
+            <strong>IMPLEMENTED:</strong> Profile page now uses new backend endpoints for updating user information and avatar
+        </div>
+
+        <h3>🔗 API Endpoints Added:</h3>
+        <div class="endpoint-box">
+            <strong>1. Update User Info:</strong><br>
+            <code>PUT /user/update/{userId}</code><br>
+            <em>Used for updating user profile information</em>
+        </div>
+        <div class="endpoint-box">
+            <strong>2. Update Avatar:</strong><br>
+            <code>PUT /user/updateAvatar/{userId}</code><br>
+            <em>Used for uploading and updating user avatar</em>
+        </div>
+
+        <h3>📋 Request Body Structure:</h3>
+        <div class="code-block">
+// Update User Info Request Body:
+{
+    "firstName": "Van",
+    "lastName": "Hieu", 
+    "phone": "0123456789",
+    "permanentAddress": "Lý Sơn - Quảng Ngãi",
+    "gender": "Nam",
+    "dateOfBirth": "23/09/2004",
+    "username": "hieu@123"
+}
+
+// Update Avatar Request:
+FormData with 'file' field containing the image file
+        </div>
+    </div>
+
+    <div class="update-section">
+        <h2>🔄 Data Structure Changes</h2>
+        <div class="implementation-box">
+            <strong>UPDATED:</strong> Removed "surname" (tên đệm) field and added "username" field
+        </div>
+
+        <h3>🔧 Changes Made:</h3>
+        <ul class="checklist">
+            <li>Removed "surname" (tên đệm) field from form and display</li>
+            <li>Added "username" (tên đăng nhập) field to form and display</li>
+            <li>Updated field labels: "lastName" now means "Họ" (family name)</li>
+            <li>Updated date format to DD/MM/YYYY for backend compatibility</li>
+            <li>Simplified full name display to use only lastName + firstName</li>
+        </ul>
+
+        <h3>📊 Field Mapping Changes:</h3>
+        <div class="code-block">
+// BEFORE (Old Structure):
+{
+  surname: "Nguyễn",     // Họ
+  lastName: "Văn",       // Tên đệm  
+  firstName: "Hiếu"      // Tên
+}
+// Display: "Nguyễn Văn Hiếu"
+
+// AFTER (New Structure):
+{
+  username: "hieu@123",  // Tên đăng nhập
+  lastName: "Nguyễn",    // Họ
+  firstName: "Văn Hiếu"  // Tên
+}
+// Display: "Nguyễn Văn Hiếu"
+        </div>
+    </div>
+
+    <div class="update-section">
+        <h2>🛠️ Implementation Details</h2>
+
+        <h3>🔧 AuthService Updates:</h3>
+        <div class="code-block">
+// Added updateInfo method
+async updateInfo(userData, userId) {
+  const response = await api.put(`/user/update/${userId}`, userData, {
+    'Content-Type': 'application/json'
+  });
+  return { status: 200, data: response.data.result };
+}
+
+// Added updateAvatar method  
+async updateAvatar(file, userId) {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.put(`/user/updateAvatar/${userId}`, formData, {
+    'Content-Type': 'multipart/form-data'
+  });
+  return { status: 200, data: response.data.result };
+}
+        </div>
+
+        <h3>🔧 AuthContext Updates:</h3>
+        <div class="code-block">
+// Updated updateUserFields to use new API structure
+const updateUserFields = async (userData) => {
+  const response = await AuthService.updateInfo(userData, currentUser.id);
+  if (response.status === 200) {
+    await fetchUserInfo();
+    return { success: true, data: response.data };
+  }
+}
+
+// Added updateAvatar function
+const updateAvatar = async (file) => {
+  const response = await AuthService.updateAvatar(file, currentUser.id);
+  if (response.status === 200) {
+    await fetchUserInfo();
+    return { success: true, data: response.data };
+  }
+}
+        </div>
+
+        <h3>🔧 ProfilePage Updates:</h3>
+        <div class="code-block">
+// Updated form submission
+const handleSubmit = async (values) => {
+  const userUpdateData = {
+    firstName: values.firstName,
+    lastName: values.lastName,
+    phone: values.phone,
+    permanentAddress: values.permanentAddress,
+    gender: values.gender,
+    dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format('DD/MM/YYYY') : null,
+    username: values.username
+  };
+  
+  const result = await updateUserFields(userUpdateData);
+}
+
+// Updated avatar upload
+const handleAvatarUpload = async (file) => {
+  const result = await updateAvatar(file);
+  if (result.success) {
+    message.success("Cập nhật ảnh đại diện thành công!");
+  }
+}
+        </div>
+    </div>
+
+    <div class="update-section">
+        <h2>🔄 Data Flow</h2>
+        <div class="api-flow">
+            <h4>Update User Info Flow:</h4>
+            <div class="step">
+                <strong>Step 1:</strong> User fills form with username, lastName, firstName, phone, address, gender, dateOfBirth
+            </div>
+            <div class="step">
+                <strong>Step 2:</strong> Form submission calls handleSubmit() with form values
+            </div>
+            <div class="step">
+                <strong>Step 3:</strong> Data formatted to match backend expectations (DD/MM/YYYY date format)
+            </div>
+            <div class="step">
+                <strong>Step 4:</strong> AuthContext.updateUserFields() called with formatted data
+            </div>
+            <div class="step">
+                <strong>Step 5:</strong> AuthService.updateInfo() makes PUT request to /user/update/{userId}
+            </div>
+            <div class="step">
+                <strong>Step 6:</strong> Backend updates user info and returns updated user data
+            </div>
+            <div class="step">
+                <strong>Step 7:</strong> AuthContext.fetchUserInfo() refreshes current user data
+            </div>
+            <div class="step">
+                <strong>Step 8:</strong> UI updates with new user information
+            </div>
+        </div>
+
+        <div class="api-flow">
+            <h4>Update Avatar Flow:</h4>
+            <div class="step">
+                <strong>Step 1:</strong> User selects image file through file input
+            </div>
+            <div class="step">
+                <strong>Step 2:</strong> onChange handler calls updateAvatar() with selected file
+            </div>
+            <div class="step">
+                <strong>Step 3:</strong> AuthService.updateAvatar() creates FormData and makes PUT request
+            </div>
+            <div class="step">
+                <strong>Step 4:</strong> Backend processes image upload to /user/updateAvatar/{userId}
+            </div>
+            <div class="step">
+                <strong>Step 5:</strong> Backend returns updated user data with new avatar URL
+            </div>
+            <div class="step">
+                <strong>Step 6:</strong> AuthContext.fetchUserInfo() refreshes current user data
+            </div>
+            <div class="step">
+                <strong>Step 7:</strong> UI updates to display new avatar image
+            </div>
+        </div>
+    </div>
+
+    <div class="update-section">
+        <h2>🧪 Testing Checklist</h2>
+        <ul class="checklist">
+            <li>Profile page loads with current user information</li>
+            <li>Username field displays and can be edited</li>
+            <li>Surname field is removed from form and display</li>
+            <li>LastName field now represents "Họ" (family name)</li>
+            <li>FirstName field represents full given name</li>
+            <li>Form validation works for required fields</li>
+            <li>Date picker formats dates as DD/MM/YYYY</li>
+            <li>Profile update calls PUT /user/update/{userId} endpoint</li>
+            <li>Avatar upload calls PUT /user/updateAvatar/{userId} endpoint</li>
+            <li>Success messages display after successful updates</li>
+            <li>Error handling works for failed API calls</li>
+            <li>User data refreshes after successful updates</li>
+        </ul>
+    </div>
+
+    <div class="update-section">
+        <h2>📋 Files Modified</h2>
+        <ul>
+            <li><strong>src/services/Auth/AuthServices.js</strong>
+                <ul>
+                    <li>Added updateInfo() method for PUT /user/update/{userId}</li>
+                    <li>Added updateAvatar() method for PUT /user/updateAvatar/{userId}</li>
+                </ul>
+            </li>
+            <li><strong>src/context/AuthContext.jsx</strong>
+                <ul>
+                    <li>Updated updateUserFields() to use new API structure</li>
+                    <li>Added updateAvatar() function</li>
+                    <li>Added updateAvatar to context value</li>
+                </ul>
+            </li>
+            <li><strong>src/pages/Profile/ProfilePage.jsx</strong>
+                <ul>
+                    <li>Removed surname field, added username field</li>
+                    <li>Updated form labels and validation</li>
+                    <li>Updated handleSubmit() to use new data structure</li>
+                    <li>Updated avatar upload to use updateAvatar()</li>
+                    <li>Updated display logic to show username</li>
+                    <li>Changed date format to DD/MM/YYYY</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('vi-VN');
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useOrderStore } from './OrderStore'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -12,6 +12,7 @@ import {
   Loader2,
   ShoppingBag,
   Calendar,
+  X,
 } from 'lucide-react'
 import { DatePicker, Space } from 'antd'
 
@@ -28,12 +29,35 @@ const OrderHistory = () => {
     updateFilters,
     changePage,
     changePageSize,
+    fetchOrdersHistory,
+    // Search related state
+    searchResults,
+    searchLoading,
+    searchError,
+    searchPagination,
+    isSearchMode,
+    changeSearchPage,
+    changeSearchPageSize,
+    searchOrders,
+    clearSearch,
   } = useOrderStore()
 
   const [hoveredOrder, setHoveredOrder] = useState(null)
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
 
   const containerRef = useRef(null)
+
+  // Fetch history orders when component mounts
+  useEffect(() => {
+    fetchOrdersHistory()
+  }, [fetchOrdersHistory])
+
+  // Fetch data when filters change (for status filtering)
+  useEffect(() => {
+    if (!isSearchMode) {
+      fetchOrdersHistory()
+    }
+  }, [filters.statusId, fetchOrdersHistory, isSearchMode])
 
   const handleSearchChange = e => {
     const searchTerm = e.target.value
@@ -103,7 +127,10 @@ const OrderHistory = () => {
 
   const Pagination = () => {
     const pageNumbers = []
-    const { currentPage, totalPages } = pagination
+    // Use search pagination when in search mode, otherwise use regular pagination
+    const currentPagination = isSearchMode ? searchPagination : pagination
+    const { currentPage, totalPages } = currentPagination
+    const handlePageChange = isSearchMode ? changeSearchPage : changePage
 
     let startPage = Math.max(1, currentPage - 2)
     let endPage = Math.min(totalPages, startPage + 4)
@@ -122,24 +149,24 @@ const OrderHistory = () => {
           <span className='text-sm text-gray-700'>
             Hiển thị{' '}
             <span className='font-medium'>
-              {(currentPage - 1) * pagination.pageSize + 1}
+              {(currentPage - 1) * currentPagination.pageSize + 1}
             </span>{' '}
             đến{' '}
             <span className='font-medium'>
               {Math.min(
-                currentPage * pagination.pageSize,
-                pagination.totalItems
+                currentPage * currentPagination.pageSize,
+                currentPagination.totalItems
               )}
             </span>{' '}
             trong tổng số{' '}
-            <span className='font-medium'>{pagination.totalItems}</span> đơn
-            hàng
+            <span className='font-medium'>{currentPagination.totalItems}</span> đơn
+            hàng {isSearchMode && <span className="text-blue-600">(kết quả tìm kiếm)</span>}
           </span>
         </div>
         <div>
           <nav className='flex items-center space-x-1'>
             <button
-              onClick={() => changePage(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className={`rounded px-2 py-1 ${currentPage === 1 ? 'cursor-not-allowed text-gray-400' : 'text-blue-600 hover:bg-blue-50'}`}
             >
@@ -149,7 +176,7 @@ const OrderHistory = () => {
             {pageNumbers.map(number => (
               <button
                 key={number}
-                onClick={() => changePage(number)}
+                onClick={() => handlePageChange(number)}
                 className={`rounded px-3 py-1 ${currentPage === number ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
               >
                 {number}
@@ -157,7 +184,7 @@ const OrderHistory = () => {
             ))}
 
             <button
-              onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               className={`rounded px-2 py-1 ${currentPage === totalPages ? 'cursor-not-allowed text-gray-400' : 'text-blue-600 hover:bg-blue-50'}`}
             >
@@ -213,9 +240,9 @@ const OrderHistory = () => {
             <div>
               <p className='text-sm font-medium text-gray-700'>Ngày đặt:</p>
               <p className='text-sm text-gray-900'>
-                {format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
+                {order.orderDate ? format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
                   locale: vi,
-                })}
+                }) : '—'}
               </p>
             </div>
             <div>
@@ -269,7 +296,7 @@ const OrderHistory = () => {
                       {new Intl.NumberFormat('vi-VN', {
                         style: 'currency',
                         currency: 'VND',
-                      }).format(item.productPrice || 0)}
+                      }).format(item.price || 0)}
                     </span>
                   </div>
                 </div>
@@ -308,6 +335,21 @@ const OrderHistory = () => {
 
   return (
     <div className='container mx-auto' ref={containerRef}>
+      {/* Search Error Display */}
+      {searchError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <X className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Lỗi tìm kiếm</h3>
+              <p className="mt-1 text-sm text-red-700">{searchError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className='mb-6 rounded-lg bg-white p-4 shadow'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <div className='relative'>
@@ -396,32 +438,34 @@ const OrderHistory = () => {
                   Phương thức thanh toán
                 </th>
                 <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Địa chỉ giao hàng
+                  Trạng thái thanh toán
                 </th>
                 <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Ghi chú
+                  Địa chỉ giao hàng
                 </th>
               </tr>
             </thead>
             <tbody className='divide-y divide-gray-200 bg-white'>
-              {loading ? (
+              {(isSearchMode ? searchLoading : loading) ? (
                 <tr>
                   <td colSpan='7' className='px-6 py-4 text-center'>
                     <Loader2 className='mx-auto h-6 w-6 animate-spin' />
-                    <p className='mt-2 text-gray-500'>Đang tải dữ liệu...</p>
+                    <p className='mt-2 text-gray-500'>
+                      {isSearchMode ? 'Đang tìm kiếm...' : 'Đang tải dữ liệu...'}
+                    </p>
                   </td>
                 </tr>
-              ) : ordersHistory.length === 0 ? (
+              ) : (isSearchMode ? searchResults : ordersHistory).length === 0 ? (
                 <tr>
                   <td
                     colSpan='7'
                     className='px-6 py-4 text-center text-gray-500'
                   >
-                    Không có đơn hàng nào
+                    {isSearchMode ? 'Không tìm thấy đơn hàng nào' : 'Không có đơn hàng nào'}
                   </td>
                 </tr>
               ) : (
-                ordersHistory.map(order => (
+                (isSearchMode ? searchResults : ordersHistory).map(order => (
                   <tr
                     key={order.id}
                     className='hover:bg-blue-50'
@@ -434,9 +478,9 @@ const OrderHistory = () => {
                       {order.orderNumber || order.id}
                     </td>
                     <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                      {format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
+                      {order.orderDate ? format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', {
                         locale: vi,
-                      })}
+                      }) : '—'}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap'>
                       <span
@@ -453,13 +497,13 @@ const OrderHistory = () => {
                       }).format(order.totalPrice)}
                     </td>
                     <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                      {order.paymentMethodName || order.paymentMethod}
+                      {order.payment?.method || order.paymentMethodName || order.paymentMethod || '—'}
                     </td>
-                    <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>
-                      {order.shippingAddress}
+                    <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
+                      {order.payment?.status || '—'}
                     </td>
-                    <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>
-                      {order.notes || '-'}
+                    <td className='px-6 py-4 text-sm text-gray-500 break-words'>
+                      {order.shippingAddress || '—'}
                     </td>
                   </tr>
                 ))
@@ -474,8 +518,15 @@ const OrderHistory = () => {
           <div className='mt-2 flex items-center'>
             <span className='mr-2 text-sm text-gray-700'>Hiển thị:</span>
             <select
-              value={pagination.pageSize}
-              onChange={e => changePageSize(Number(e.target.value))}
+              value={isSearchMode ? searchPagination.pageSize : pagination.pageSize}
+              onChange={e => {
+                const newSize = Number(e.target.value)
+                if (isSearchMode) {
+                  changeSearchPageSize(newSize)
+                } else {
+                  changePageSize(newSize)
+                }
+              }}
               className='rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
             >
               {[5, 10, 20, 50].map(size => (

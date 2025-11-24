@@ -11,22 +11,22 @@ const PasswordChangeForm = () => {
     setLoading(true);
     try {
       const { currentPassword, newPassword, confirmPassword } = values;
-      
+
       const response = await AuthService.changePassword(
-        currentPassword, 
-        newPassword, 
+        currentPassword,
+        newPassword,
         confirmPassword
       );
-      
-      if (response && response.data && response.status === 200) {
-        message.success('Đổi mật khẩu thành công!');
+
+      if (response?.data?.success || response?.status === 200) {
+        message.success( 'Đổi mật khẩu thành công!');
         form.resetFields();
       } else {
         message.error('Không thể đổi mật khẩu. Vui lòng thử lại sau.');
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      
+
       if (error.response) {
         switch (error.response.status) {
           case 400:
@@ -58,7 +58,7 @@ const PasswordChangeForm = () => {
         <FiLock className="text-blue-600 text-xl" />
         <h3 className="text-lg font-medium text-gray-800">Đổi mật khẩu</h3>
       </div>
-      
+
       <Form
         form={form}
         layout="vertical"
@@ -71,9 +71,9 @@ const PasswordChangeForm = () => {
             { required: true, message: 'Vui lòng nhập mật khẩu hiện tại' },
           ]}
         >
-          <Input.Password 
-            prefix={<FiLock className="text-gray-400" />} 
-            placeholder="Nhập mật khẩu hiện tại" 
+          <Input.Password
+            prefix={<FiLock className="text-gray-400" />}
+            placeholder="Nhập mật khẩu hiện tại"
           />
         </Form.Item>
 
@@ -83,15 +83,15 @@ const PasswordChangeForm = () => {
           rules={[
             { required: true, message: 'Vui lòng nhập mật khẩu mới' },
             { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' },
-            { 
+            {
               pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/,
-              message: 'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa, 1 số và 1 ký tự đặc biệt' 
+              message: 'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa, 1 số và 1 ký tự đặc biệt'
             }
           ]}
         >
-          <Input.Password 
-            prefix={<FiLock className="text-gray-400" />} 
-            placeholder="Nhập mật khẩu mới" 
+          <Input.Password
+            prefix={<FiLock className="text-gray-400" />}
+            placeholder="Nhập mật khẩu mới"
           />
         </Form.Item>
 
@@ -111,9 +111,9 @@ const PasswordChangeForm = () => {
             }),
           ]}
         >
-          <Input.Password 
-            prefix={<FiLock className="text-gray-400" />} 
-            placeholder="Xác nhận mật khẩu mới" 
+          <Input.Password
+            prefix={<FiLock className="text-gray-400" />}
+            placeholder="Xác nhận mật khẩu mới"
           />
         </Form.Item>
 
@@ -123,7 +123,7 @@ const PasswordChangeForm = () => {
           </Button>
         </div>
       </Form>
-      
+
       <Divider />
     </div>
   );

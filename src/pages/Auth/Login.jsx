@@ -143,7 +143,7 @@ function Login() {
 
                 <div className="hidden md:block w-1/2 relative bg-blue-600">
                     <img
-                        src={"https://res.cloudinary.com/dwbcqjupj/image/upload/v1745990380/milkstore_qildau.jpg"}
+                        src={"https://res.cloudinary.com/dwbcqjupj/image/upload/v1755619780/soccerboot_vkuqz5.jpg"}
                         alt="Milk Store"
                         className="w-full h-full object-cover opacity-90"
                     />

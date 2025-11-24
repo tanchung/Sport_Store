@@ -14,6 +14,8 @@ import ResetPassword from './pages/Auth/ResetPassword';
 import Home from './pages/Home/Home';
 import Contact from './pages/Contact/Contact';
 import Products from './pages/Products/Products';
+import ProductsDemo from './pages/Products/ProductsDemo';
+import PaginationTest from './pages/Products/Components/PaginationTest';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
 import About from './pages/About/About';
 import Footer from './components/footer/Footer';
@@ -29,6 +31,7 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import OrderHistory from './pages/Order/History';
 import Order from './pages/Order/Order';
 import Voucher from '@/pages/Voucher/Voucher';
+import CollectionDetail from './pages/Collection/CollectionDetail';
 import PaymentMethods from './pages/Guide/PaymentMethods';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -104,8 +107,11 @@ const AppRoutes = () => {
         <Route path='/trang-chu' element={<Home />} />
         <Route path='/ve-chung-toi' element={<About />} />
         <Route path='/san-pham' element={<Products />} />
+        <Route path='/san-pham-demo' element={<ProductsDemo />} />
+        <Route path='/pagination-test' element={<PaginationTest />} />
         <Route path='/lien-he' element={<Contact />} />
         <Route path="/san-pham/:id" element={<ProductDetail />} />
+        <Route path="/bo-suu-tap/:collectionId" element={<CollectionDetail />} />
         <Route path='/chinh-sach-van-chuyen' element={<TransferPolicy />} />
         <Route path='/huong-dan-mua-hang' element={<PurchaseGuide />} />
         <Route path='/chinh-sach-doi-tra' element={<ReturnPolicy />} />

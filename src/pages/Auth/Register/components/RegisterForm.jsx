@@ -1,6 +1,7 @@
 import React from 'react';
-import { Form, Input, Checkbox, Radio } from 'antd';
+import { Form, Input, Checkbox, Radio, DatePicker } from 'antd';
 import { motion } from 'framer-motion';
+import dayjs from 'dayjs';
 
 const RegisterForm = ({ form, onFinish, onFinishFailed, loading }) => {
   return (
@@ -86,30 +87,41 @@ const RegisterForm = ({ form, onFinish, onFinishFailed, loading }) => {
         label={<span className="text-sm font-medium">Địa chỉ</span>}
         name="address"
       >
-        <Input className="rounded-lg" />
+        <Input className="rounded-lg" placeholder="123 Đường ABC, Quận 1, TP. HCM" />
       </Form.Item>
-      
-      {/* Gender selection */}
-      <Form.Item
-        label={<span className="text-sm font-medium">Giới tính</span>}
-        name="gender"
-        rules={[
-          { required: true, message: 'Vui lòng chọn giới tính!' },
-          { 
-            validator: (_, value) => {
-              if (!value || ["Nam", "Nữ"].includes(value)) {
-                return Promise.resolve();
-              }
-              return Promise.reject('Giới tính chỉ được chọn Nam hoặc Nữ!');
-            }
-          }
-        ]}
-      >
-        <Radio.Group>
-          <Radio value="Nam">Nam</Radio>
-          <Radio value="Nữ">Nữ</Radio>
-        </Radio.Group>
-      </Form.Item>
+
+      {/* Date of Birth and Gender - Grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Form.Item
+          label={<span className="text-sm font-medium">Ngày sinh</span>}
+          name="dateOfBirth"
+          rules={[
+            { required: true, message: 'Vui lòng chọn ngày sinh!' }
+          ]}
+        >
+          <DatePicker 
+            className="w-full rounded-lg" 
+            format="YYYY-MM-DD"
+            placeholder="Chọn ngày sinh"
+            disabledDate={(current) => {
+              // Không cho chọn ngày trong tương lai và phải trên 13 tuổi
+              return current && (current > dayjs().endOf('day') || current > dayjs().subtract(13, 'years'));
+            }}
+          />
+        </Form.Item>
+        
+        {/* Gender selection */}
+        <Form.Item
+          label={<span className="text-sm font-medium">Giới tính</span>}
+          name="gender"
+          rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+        >
+          <Radio.Group className="flex items-center h-8">
+            <Radio value="nam">Nam</Radio>
+            <Radio value="nữ">Nữ</Radio>
+          </Radio.Group>
+        </Form.Item>
+      </div>
 
       {/* Password */}
       <Form.Item

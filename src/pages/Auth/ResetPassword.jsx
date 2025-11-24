@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, message, Alert } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import AuthService from '../../services/Auth/AuthServices';
 
 function ResetPassword() {
     const navigate = useNavigate();
@@ -48,19 +48,11 @@ function ResetPassword() {
             setError('');
             console.log("Submitting reset password form with token:", token);
 
-            // Sử dụng trực tiếp axios để debug
-            const response = await axios.post(
-                'https://milkshop-hpd4e9ewcsbdevfx.eastasia-01.azurewebsites.net/api/Auth/reset-password',
-                {
-                    token: token,
-                    newPassword: values.newPassword,
-                    confirmPassword: values.confirmPassword
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
+            // Sử dụng AuthService để reset password
+            const response = await AuthService.resetPassword(
+                token,
+                values.newPassword,
+                values.confirmPassword
             );
 
             console.log("Direct API response:", response);
@@ -100,12 +92,12 @@ function ResetPassword() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-600 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row"
+                className="w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-white/20"
             >
                 {/* Left Side - Form */}
                 <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col">
@@ -152,13 +144,18 @@ function ResetPassword() {
                             name="newPassword"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-                                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' }
+                                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' },
+                                {
+                                    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$/,
+                                    message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số!'
+                                }
                             ]}
                             className="mb-4"
                         >
                             <Input.Password
-                                size="middle"
-                                className="rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                                size="large"
+                                className="rounded-lg"
+                                placeholder="Nhập mật khẩu mới"
                             />
                         </Form.Item>
 
@@ -177,19 +174,20 @@ function ResetPassword() {
                                     },
                                 }),
                             ]}
-                            className="mb-4"
+                            className="mb-6"
                         >
                             <Input.Password
-                                size="middle"
-                                className="rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                                size="large"
+                                className="rounded-lg"
+                                placeholder="Nhập lại mật khẩu mới"
                             />
                         </Form.Item>
 
                         <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                                disabled={loading || !token}
+                                className="w-full bg-[#8ecae6] hover:bg-[#219ebc] text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
                             >
                                 {loading ? (
                                     <span className="flex items-center justify-center">
@@ -202,16 +200,34 @@ function ResetPassword() {
                                 ) : 'Đặt lại mật khẩu'}
                             </button>
                         </motion.div>
+
+                        {/* Back to login */}
+                        <div className="text-center mt-4">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/dang-nhap')}
+                                className="text-[#219ebc] hover:text-[#023047] text-sm font-medium transition duration-200"
+                            >
+                                ← Quay lại đăng nhập
+                            </button>
+                        </div>
                     </Form>
                 </div>
 
                 {/* Right Side - Image */}
-                <div className="hidden md:block w-1/2 relative bg-blue-600">
+                <div className="hidden md:block w-1/2 relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#8ecae6]/30 to-[#219ebc]/30"></div>
                     <img
-                        src={"https://res.cloudinary.com/dwbcqjupj/image/upload/v1745990380/milkstore_qildau.jpg"}
-                        alt="Milk Store"
-                        className="w-full h-full object-cover opacity-90"
+                        src="https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
+                        alt="Milk bottles"
+                        className="w-full h-full object-cover"
                     />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-white text-center p-6">
+                            <h2 className="text-2xl font-bold mb-2">Đặt lại mật khẩu</h2>
+                            <p>Bảo mật tài khoản của bạn</p>
+                        </div>
+                    </div>
                 </div>
             </motion.div>
         </div>

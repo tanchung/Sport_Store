@@ -6,12 +6,13 @@ import {
   IoHome,
   IoLocationSharp,
 } from 'react-icons/io5'
-import { LuMilk } from 'react-icons/lu'
+import { GiRunningShoe } from "react-icons/gi";
+
 import { MdLocalPhone, MdPayment, MdPolicy, MdSecurity } from 'react-icons/md'
 import { TbTruckDelivery } from 'react-icons/tb'
 import bgcity from '/src/assets/bgcity5.jpg'
 import shipper from '/src/assets/shipper.webp'
-import milkstore from '/src/assets/store2.png'
+import milkstore from '/src/assets/mimhloz.png'
 
 const utilities = [
   {
@@ -23,7 +24,7 @@ const utilities = [
     label: 'Wifi miễn phí',
   },
   {
-    icon: <LuMilk className='mb-2 size-15 text-red-500' />,
+    icon: <GiRunningShoe className='mb-2 size-15 text-red-500' />,
     label: (
       <>
         Xem và trải nghiệm
@@ -73,15 +74,15 @@ const utilities = [
 ]
 const urlImg = [
   {
-    img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1747588508/nguon-hang-sua_mpxzom.webp',
+    img: 'https://files.elfsightcdn.com/eafe4a4d-3436-495d-b748-5bdce62d911d/27201f63-b2f0-473c-9bba-c21da45b26ed/2.jpg',
     alt: 'image1',
   },
   {
-    img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1747588506/anh-mo-ta_ssgavh.jpg',
+    img: 'https://files.elfsightcdn.com/eafe4a4d-3436-495d-b748-5bdce62d911d/0187e057-1615-470e-87aa-9c74f7938dce/nnkt.jpg',
     alt: 'image2',
   },
   {
-    img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1747588500/anh_cua_hang_sua_ctfahi.jpg',
+    img: 'https://files.elfsightcdn.com/eafe4a4d-3436-495d-b748-5bdce62d911d/94757971-0f00-4982-821f-64d96b28a354/4.jpg',
     alt: 'image3',
   },
 ]
@@ -102,10 +103,10 @@ const Contact = () => {
       <div className='absolute top-40 left-10 w-[95vw]'>
         <div className='w-full'>
           <h1 className='text-4xl font-semibold'>
-            HỆ THỐNG SHOWROOM MILKSTORE
+            HỆ THỐNG SHOWROOM VNHI
           </h1>
           <h1 className='mt-2 text-xl font-semibold'>
-            Địa điểm trải nghiệm và mua sắm sữa uống chất lượng
+            Địa điểm trải nghiệm và mua sắm giày chất lượng
           </h1>
           <button
             onClick={scrollToSection}
@@ -121,12 +122,12 @@ const Contact = () => {
           <img
             src={milkstore}
             alt='store'
-            className='absolute right-0 bottom-[-190px] h-[350px]'
+            className='absolute right-0 bottom-[-208px] h-[400px]'
           />
           <img
             src={milkstore}
             alt='store'
-            className='absolute right-73 bottom-[-180px] h-[280px]'
+            className='absolute right-73 bottom-[-193px] h-[300px]'
           />
         </div>
       </div>
@@ -144,7 +145,7 @@ const Contact = () => {
         <div className='mt-20 flex w-full flex-col gap-6 p-6 lg:flex-row'>
           <div className='w-full rounded-lg bg-white p-6 shadow-lg lg:w-1/2'>
             <h2 className='mb-3 text-2xl font-medium text-blue-900'>
-              MILKSTORE
+              VNHI
             </h2>
             <p className='mb-4 text-5xl font-semibold text-blue-900'>
               LẠC LONG QUÂN
@@ -211,7 +212,7 @@ const Contact = () => {
         </div>
         <div className='my-24 flex w-full flex-col items-center px-6'>
           <h2 className='mb-16 text-4xl font-semibold text-blue-950'>
-            CÁC TIỆN ÍCH TẠI SHOWROOM MILKSTORE
+            CÁC TIỆN ÍCH TẠI SHOWROOM VNHI
           </h2>
           <div className='grid grid-cols-4 gap-6 gap-y-8'>
             {utilities.map((item, index) => (
