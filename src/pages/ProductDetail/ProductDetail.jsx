@@ -57,14 +57,36 @@ const ProductDetail = () => {
 
   // Initialize ShareThis buttons after product loads
   useEffect(() => {
-    if (product && window.__sharethis__) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        if (window.__sharethis__.initialize) {
-          window.__sharethis__.initialize();
-        }
-      }, 100);
+    if (!product) return;
+
+    const initShareThis = () => {
+      if (window.__sharethis__ && window.__sharethis__.initialize) {
+        console.log('Initializing ShareThis...');
+        window.__sharethis__.initialize();
+      } else {
+        console.log('ShareThis not ready yet');
+      }
+    };
+
+    // Try to initialize immediately
+    initShareThis();
+
+    // Also listen for the script load event
+    const script = document.querySelector('script[src*="sharethis"]');
+    if (script) {
+      script.addEventListener('load', () => {
+        setTimeout(initShareThis, 200);
+      });
     }
+
+    // Fallback: try again after a delay
+    const timer = setTimeout(initShareThis, 500);
+    const timer2 = setTimeout(initShareThis, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
   }, [product]);
 
   if (loading) return <LoadingState />;
