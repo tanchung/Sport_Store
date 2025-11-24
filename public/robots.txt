@@ -1,0 +1,28 @@
+# robots.txt for VNHI Store - Sport Shoes E-commerce
+# https://vnhi-store.vercel.app
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /thanh-toan
+Disallow: /gio-hang
+Disallow: */checkout
+Disallow: */cart
+
+# Allow Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+
+# Allow Google AdSense Bot
+User-agent: Mediapartners-Google
+Allow: /
+
+# Crawl-delay for bots
+Crawl-delay: 1
+
+# Sitemap location (Dynamic sitemap with all products)
+Sitemap: https://vnhi-store.vercel.app/sitemap.xml
+
+# Alternative sitemap location
+Sitemap: https://vnhi-store.vercel.app/api/sitemap
