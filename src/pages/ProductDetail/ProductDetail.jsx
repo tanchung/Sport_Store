@@ -107,6 +107,85 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
+  // Cập nhật meta tags trực tiếp vào DOM để Facebook crawler thấy ngay
+  useEffect(() => {
+    if (!product) return;
+
+    const productName = product.name || 'Sản phẩm không tên';
+    const rawDescription = product.description || `Mua ${productName} chính hãng, giá tốt. Cam kết chất lượng và giao hàng nhanh.`;
+    const productDescription = rawDescription.substring(0, 155) + (rawDescription.length > 155 ? '...' : '');
+    
+    let productImageUrl = '';
+    if (product.images && product.images.length > 0 && product.images[0].url) {
+      const imgUrl = product.images[0].url;
+      productImageUrl = imgUrl.startsWith('http') ? imgUrl : `${window.location.origin}${imgUrl}`;
+    } else {
+      productImageUrl = `${window.location.origin}/default-product.jpg`;
+    }
+    
+    const canonicalUrl = window.location.href;
+
+    // Helper function để update hoặc tạo meta tag
+    const updateMetaTag = (property, content, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let element = document.querySelector(`meta[${attr}="${property}"]`);
+      
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attr, property);
+        document.head.appendChild(element);
+      }
+      
+      element.setAttribute('content', content);
+    };
+
+    // Update title
+    document.title = `${productName} | VNHI Store`;
+
+    // Update basic meta tags
+    updateMetaTag('description', productDescription);
+    updateMetaTag('keywords', `${productName}, ${product.brand?.name || ''}, ${product.category || ''}, giày thể thao, mua online`);
+
+    // Update Open Graph tags
+    updateMetaTag('og:type', 'product', true);
+    updateMetaTag('og:url', canonicalUrl, true);
+    updateMetaTag('og:title', productName, true);
+    updateMetaTag('og:description', productDescription, true);
+    updateMetaTag('og:image', productImageUrl, true);
+    updateMetaTag('og:image:secure_url', productImageUrl, true);
+    updateMetaTag('og:image:width', '1200', true);
+    updateMetaTag('og:image:height', '630', true);
+    updateMetaTag('og:image:alt', productName, true);
+    updateMetaTag('og:site_name', 'VNHI Store', true);
+    updateMetaTag('og:locale', 'vi_VN', true);
+
+    // Update Twitter Card tags
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:url', canonicalUrl);
+    updateMetaTag('twitter:title', productName);
+    updateMetaTag('twitter:description', productDescription);
+    updateMetaTag('twitter:image', productImageUrl);
+
+    // Update product-specific tags
+    if (product.price) {
+      updateMetaTag('product:price:amount', product.price.toString(), true);
+      updateMetaTag('product:price:currency', 'VND', true);
+    }
+    if (product.brand?.name) {
+      updateMetaTag('product:brand', product.brand.name, true);
+    }
+
+    // Update canonical link
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.setAttribute('href', canonicalUrl);
+
+  }, [product]);
+
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
   if (!product) return <NotFound />;
