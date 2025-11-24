@@ -4,6 +4,7 @@ import { Carousel } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { HiOutlineArrowRight } from 'react-icons/hi2'
 import { Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 
 // Fallback banner images in case API fails
 const fallbackBanners = [
@@ -243,8 +244,47 @@ const Home = () => {
     fetchData()
   }, [])
 
+  // Organization Schema for homepage
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "VNHI - Cửa Hàng Giày Thể Thao",
+    "url": window.location.origin,
+    "logo": `${window.location.origin}/logo.png`,
+    "description": "Cửa hàng chuyên cung cấp giày thể thao chính hãng, giày chạy bộ, giày đá bóng, giày sneakers với giá cả cạnh tranh. Giao hàng toàn quốc, đổi trả dễ dàng.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "VN",
+      "addressLocality": "Hồ Chí Minh"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "telephone": "+84-xxx-xxx-xxx"
+    }
+  };
+
   return (
     <div className='flex flex-col '>
+      <Helmet>
+        <title>VNHI - Cửa Hàng Giày Thể Thao Chính Hãng | Giá Tốt - Chất Lượng</title>
+        <meta name="description" content="Mua giày thể thao chính hãng tại VNHI Store. Chuyên cung cấp giày chạy bộ, giày đá bóng, giày sneakers từ các thương hiệu nổi tiếng. Giao hàng nhanh toàn quốc, đổi trả 30 ngày, bảo hành chính hãng." />
+        <meta name="keywords" content="giày thể thao, giày chạy bộ, giày đá bóng, giày sneakers, mua giày online, giày chính hãng, VNHI Store" />
+        <link rel="canonical" href={window.location.origin} />
+        
+        {/* Schema.org Organization */}
+        <script type="application/ld+json">
+          {JSON.stringify(organizationSchema)}
+        </script>
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.origin} />
+        <meta property="og:title" content="VNHI - Cửa Hàng Giày Thể Thao Chính Hãng" />
+        <meta property="og:description" content="Mua giày thể thao chính hãng với giá tốt nhất. Giao hàng toàn quốc, đổi trả 30 ngày." />
+        <meta property="og:site_name" content="VNHI Store" />
+      </Helmet>
+
       <div className='h-full w-full cursor-pointer'>
         {bannersLoading ? (
           <div className='h-145 w-full flex items-center justify-center bg-gray-200'>

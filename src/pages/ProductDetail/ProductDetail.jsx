@@ -77,6 +77,62 @@ const ProductDetail = () => {
   const canonicalUrl = window.location.href;
   const dimension = product.dimensions?.[0];
 
+  // --- SCHEMA.ORG STRUCTURED DATA ---
+  const productSchema = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": productName,
+    "description": productDescription,
+    "image": productImageUrl,
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand?.name || product.brand || "VNHI Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": canonicalUrl,
+      "priceCurrency": "VND",
+      "price": product.price || 0,
+      "availability": product.stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "VNHI - Cửa Hàng Giày Thể Thao"
+      }
+    },
+    "sku": product.sku || `VNHI-${id}`,
+    "aggregateRating": product.averageRating ? {
+      "@type": "AggregateRating",
+      "ratingValue": product.averageRating,
+      "reviewCount": product.reviewCount || 0
+    } : undefined
+  };
+
+  // Breadcrumb Schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org/",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Trang chủ",
+        "item": `${window.location.origin}/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Sản phẩm",
+        "item": `${window.location.origin}/san-pham`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": productName,
+        "item": canonicalUrl
+      }
+    ]
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Helmet SEO */}
@@ -84,7 +140,15 @@ const ProductDetail = () => {
         <title>{productName}</title>
         <meta name="description" content={productDescription} />
         <link rel="canonical" href={canonicalUrl} />
-        <meta name="keywords" content={`${productName}, ${product.brand?.name || ''}, ${product.category || ''}, mua online, sữa`} />
+        <meta name="keywords" content={`${productName}, ${product.brand?.name || ''}, ${product.category || ''}, mua online, giày thể thao, giày chạy bộ, giày đá bóng`} />
+        
+        {/* Schema.org Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(productSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="product" />
@@ -96,7 +160,7 @@ const ProductDetail = () => {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content={productName} />
-        <meta property="og:site_name" content="VNHI - Cửa hàng sữa" />
+        <meta property="og:site_name" content="VNHI - Cửa Hàng Giày Thể Thao" />
         <meta property="og:locale" content="vi_VN" />
         
         {/* Product-specific OG tags */}
@@ -166,19 +230,95 @@ const ProductDetail = () => {
             <div className="space-y-4">
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><InfoCircleOutlined className="text-blue-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Giới thiệu sản phẩm</h3><p className="text-gray-700">{product.description}</p></div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800 mb-2">Giới thiệu sản phẩm</h3>
+                  <p className="text-gray-700 mb-3">{product.description}</p>
+                  <p className="text-gray-700">
+                    {productName} là sản phẩm chất lượng cao được nhập khẩu và phân phối chính hãng tại Việt Nam. 
+                    Sản phẩm đáp ứng các tiêu chuẩn nghiêm ngặt về chất lượng và an toàn, 
+                    mang đến cho khách hàng trải nghiệm tốt nhất trong phân khúc giá.
+                  </p>
+                </div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><CheckCircleOutlined className="text-green-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Lợi ích sản phẩm</h3><p className="text-gray-700">Sản phẩm cung cấp nhiều dưỡng chất thiết yếu, hỗ trợ sức khỏe và phát triển toàn diện.</p></div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800 mb-2">Lợi ích sản phẩm</h3>
+                  <ul className="list-disc list-inside text-gray-700 space-y-2">
+                    <li>Thiết kế hiện đại, phù hợp với xu hướng thể thao đương đại</li>
+                    <li>Chất liệu cao cấp, bền bỉ với thời gian sử dụng lâu dài</li>
+                    <li>Đệm êm ái, hỗ trợ tối ưu cho các hoạt động vận động</li>
+                    <li>Thương hiệu uy tín, được nhiều vận động viên chuyên nghiệp tin dùng</li>
+                    <li>Công nghệ thoát khí tốt, giữ cho bàn chân luôn khô thoáng</li>
+                  </ul>
+                </div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><StarOutlined className="text-yellow-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Đặc điểm nổi bật</h3><p className="text-gray-700">Sản phẩm được sản xuất theo công nghệ hiện đại, đảm bảo chất lượng và an toàn.</p></div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800 mb-2">Đặc điểm nổi bật</h3>
+                  <p className="text-gray-700 mb-3">
+                    Sản phẩm được sản xuất theo công nghệ tiên tiến nhất, đảm bảo độ bền và hiệu suất cao. 
+                    Thiết kế ergonomic giúp tối ưu hóa sự thoải mái khi vận động.
+                  </p>
+                  <ul className="list-disc list-inside text-gray-700 space-y-2">
+                    <li>Đế giày chống trượt, ma sát cao trên mọi bề mặt</li>
+                    <li>Lớp đệm công nghệ hấp thụ lực tác động khi chạy nhảy</li>
+                    <li>Trọng lượng nhẹ, không gây cảm giác nặng nề khi di chuyển</li>
+                    <li>Kiểm soát chất lượng nghiêm ngặt qua nhiều công đoạn</li>
+                    <li>Bảo hành chính hãng, đổi trả dễ dàng trong 30 ngày</li>
+                  </ul>
+                </div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><SafetyOutlined className="text-red-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Hướng dẫn sử dụng</h3><p className="text-gray-700">Bảo quản nơi khô ráo, thoáng mát. Sử dụng theo hướng dẫn trên bao bì.</p></div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800 mb-2">Hướng dẫn sử dụng và bảo quản</h3>
+                  <div className="text-gray-700 space-y-3">
+                    <div>
+                      <strong className="block mb-1">Sử dụng:</strong>
+                      <p>Chọn size phù hợp với kích cỡ chân của bạn. Thử giày và di chuyển nhẹ nhàng để cảm nhận độ vừa vặn. 
+                      Nên mang tất khi sử dụng để tăng độ thoải mái và bảo vệ da chân.</p>
+                    </div>
+                    <div>
+                      <strong className="block mb-1">Bảo quản:</strong>
+                      <ul className="list-disc list-inside space-y-1 mt-1">
+                        <li>Vệ sinh bằng khăn ẩm sau mỗi lần sử dụng</li>
+                        <li>Phơi khô tự nhiên, tránh ánh nắng trực tiếp</li>
+                        <li>Bảo quản nơi khô ráo, thoáng mát</li>
+                        <li>Không ngâm giày trong nước quá lâu</li>
+                        <li>Sử dụng giấy nhồi vào bên trong khi không đi để giữ form</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <strong className="block mb-1">Lưu ý:</strong>
+                      <p>Sản phẩm được thiết kế cho các hoạt động thể thao. Nên thay thế sau 6-12 tháng sử dụng thường xuyên 
+                      để đảm bảo hiệu suất và độ an toàn tối ưu.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Additional SEO Content */}
+              <div className="flex items-start p-4 bg-blue-50 rounded-lg shadow-sm">
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800 mb-2">Tại sao nên chọn mua tại VNHI Store?</h3>
+                  <div className="text-gray-700 space-y-2">
+                    <p>
+                      <strong>VNHI Store</strong> là đơn vị phân phối giày thể thao chính hãng hàng đầu tại Việt Nam với hơn 10 năm kinh nghiệm. 
+                      Chúng tôi cam kết mang đến cho khách hàng những sản phẩm chất lượng cao với giá cả cạnh tranh nhất thị trường.
+                    </p>
+                    <p>
+                      <strong>Chính sách khách hàng:</strong> Miễn phí vận chuyển cho đơn hàng trên 500.000đ, 
+                      đổi trả trong 30 ngày, bảo hành chính hãng, 
+                      thanh toán linh hoạt (COD, chuyển khoản, ví điện tử), 
+                      tư vấn tận tâm 24/7 qua hotline và chat online.
+                    </p>
+                    <p>
+                      Hãy đặt hàng ngay hôm nay để nhận được ưu đãi đặc biệt và trải nghiệm dịch vụ mua sắm trực tuyến tốt nhất!
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
