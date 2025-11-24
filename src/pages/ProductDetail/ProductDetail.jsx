@@ -107,74 +107,6 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
-  // Cập nhật thủ công head tags (dự phòng cho SEO check chạy client-side)
-  useEffect(() => {
-    if (!product) return;
-
-    const productNameLocal = product.name || 'Sản phẩm không tên';
-    const rawDescriptionLocal = product.description || `Mua ${productNameLocal} chính hãng, giá tốt. Cam kết chất lượng và giao hàng nhanh.`;
-    const productDescriptionLocal = rawDescriptionLocal.substring(0, 155) + (rawDescriptionLocal.length > 155 ? '...' : '');
-
-    let productImageUrlLocal = '';
-    if (product.images && product.images.length > 0 && product.images[0].url) {
-      const imgUrl = product.images[0].url;
-      productImageUrlLocal = imgUrl.startsWith('http') ? imgUrl : `${window.location.origin}${imgUrl}`;
-    } else {
-      productImageUrlLocal = `${window.location.origin}/default-product.jpg`;
-    }
-
-    const canonicalUrlLocal = window.location.href;
-
-    // helper để tạo hoặc cập nhật thẻ meta
-    const upsertMeta = (attrName, content, isProperty = false) => {
-      if (!content) return;
-      const selector = isProperty ? `meta[property="${attrName}"]` : `meta[name="${attrName}"]`;
-      let el = document.head.querySelector(selector);
-      if (!el) {
-        el = document.createElement('meta');
-        if (isProperty) el.setAttribute('property', attrName);
-        else el.setAttribute('name', attrName);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', String(content));
-    };
-
-    // Title
-    try { document.title = productNameLocal; } catch { /* ignore */ }
-
-    // Description / Keywords
-    upsertMeta('description', productDescriptionLocal);
-    upsertMeta('keywords', `${productNameLocal}, ${product.brand?.name || ''}, ${product.category || ''}, mua online`);
-
-    // Open Graph
-    upsertMeta('og:title', productNameLocal, true);
-    upsertMeta('og:description', productDescriptionLocal, true);
-    upsertMeta('og:image', productImageUrlLocal, true);
-    upsertMeta('og:url', canonicalUrlLocal, true);
-    upsertMeta('og:type', 'product', true);
-
-    // Twitter
-    upsertMeta('twitter:card', 'summary_large_image');
-    upsertMeta('twitter:title', productNameLocal);
-    upsertMeta('twitter:description', productDescriptionLocal);
-    upsertMeta('twitter:image', productImageUrlLocal);
-
-    // canonical link
-    let canonicalEl = document.head.querySelector('link[rel="canonical"]');
-    if (!canonicalEl) {
-      canonicalEl = document.createElement('link');
-      canonicalEl.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalEl);
-    }
-    canonicalEl.setAttribute('href', canonicalUrlLocal);
-
-    // product price/brand as meta for crawlers
-    if (product.price) upsertMeta('product:price:amount', product.price, true);
-    if (product.brand?.name) upsertMeta('product:brand', product.brand.name, true);
-
-    // intentionally keep meta in place for crawlers
-  }, [product]);
-
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
   if (!product) return <NotFound />;
@@ -196,7 +128,6 @@ const ProductDetail = () => {
   
   const canonicalUrl = window.location.href;
   const dimension = product.dimensions?.[0];
-
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -296,15 +227,15 @@ const ProductDetail = () => {
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><CheckCircleOutlined className="text-green-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Lợi ích sản phẩm</h3><p className="text-gray-700">Giày mang lại độ bám sân tốt, hỗ trợ di chuyển nhanh nhẹn và kiểm soát bóng chính xác. Thiết kế êm ái giúp giảm chấn thương khi vận động mạnh.</p></div>
+                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Lợi ích sản phẩm</h3><p className="text-gray-700">Sản phẩm cung cấp nhiều dưỡng chất thiết yếu, hỗ trợ sức khỏe và phát triển toàn diện.</p></div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><StarOutlined className="text-yellow-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Đặc điểm nổi bật</h3><p className="text-gray-700">Đế giày được thiết kế chuyên dụng với đinh AG/FG phù hợp mặt sân cỏ tự nhiên và nhân tạo. Chất liệu da tổng hợp cao cấp, bền đẹp và dễ vệ sinh.</p></div>
+                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Đặc điểm nổi bật</h3><p className="text-gray-700">Sản phẩm được sản xuất theo công nghệ hiện đại, đảm bảo chất lượng và an toàn.</p></div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><SafetyOutlined className="text-red-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Hướng dẫn sử dụng</h3><p className="text-gray-700">Bảo quản nơi khô ráo, tránh ánh nắng trực tiếp. Vệ sinh bằng khăn ẩm sau mỗi lần sử dụng. Không ngâm nước hoặc giặt máy.</p></div>
+                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Hướng dẫn sử dụng</h3><p className="text-gray-700">Bảo quản nơi khô ráo, thoáng mát. Sử dụng theo hướng dẫn trên bao bì.</p></div>
               </div>
             </div>
           )}
