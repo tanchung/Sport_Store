@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/san-pham/:id", "destination": "/api/product-meta?id=:id" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
