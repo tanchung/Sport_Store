@@ -11,7 +11,6 @@ import NotFound from './Components/ProductNotFound';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import ProductService from '../../services/Product/ProductServices';
 import { InfoCircleOutlined, CheckCircleOutlined, StarOutlined, SafetyOutlined } from '@ant-design/icons';
-import GoogleAnalyticsService from '../../services/Analytics/GoogleAnalyticsService';
 
 const ProductDetail = () => {
   useScrollToTop();
@@ -43,11 +42,7 @@ const ProductDetail = () => {
       try {
         if (id) {
           const response = await ProductService.getProductById(id);
-          if (response?.data) {
-            setProduct(response.data);
-            // Track product view in Google Analytics
-            GoogleAnalyticsService.trackProductView(response.data);
-          }
+          if (response?.data) setProduct(response.data);
           else setError('Không tìm thấy sản phẩm');
         } else setError('Không tìm thấy ID sản phẩm');
       } catch (err) {
@@ -59,6 +54,18 @@ const ProductDetail = () => {
     };
     fetchProduct();
   }, [id]);
+
+  // Initialize ShareThis buttons after product loads
+  useEffect(() => {
+    if (product && window.__sharethis__) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        if (window.__sharethis__.initialize) {
+          window.__sharethis__.initialize();
+        }
+      }, 100);
+    }
+  }, [product]);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
