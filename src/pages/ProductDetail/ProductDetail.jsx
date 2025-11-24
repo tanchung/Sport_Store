@@ -296,15 +296,15 @@ const ProductDetail = () => {
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><CheckCircleOutlined className="text-green-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Lợi ích sản phẩm</h3><p className="text-gray-700">Sản phẩm cung cấp nhiều dưỡng chất thiết yếu, hỗ trợ sức khỏe và phát triển toàn diện.</p></div>
+                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Lợi ích sản phẩm</h3><p className="text-gray-700">Giày mang lại độ bám sân tốt, hỗ trợ di chuyển nhanh nhẹn và kiểm soát bóng chính xác. Thiết kế êm ái giúp giảm chấn thương khi vận động mạnh.</p></div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><StarOutlined className="text-yellow-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Đặc điểm nổi bật</h3><p className="text-gray-700">Sản phẩm được sản xuất theo công nghệ hiện đại, đảm bảo chất lượng và an toàn.</p></div>
+                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Đặc điểm nổi bật</h3><p className="text-gray-700">Đế giày được thiết kế chuyên dụng với đinh AG/FG phù hợp mặt sân cỏ tự nhiên và nhân tạo. Chất liệu da tổng hợp cao cấp, bền đẹp và dễ vệ sinh.</p></div>
               </div>
               <div className="flex items-start p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mr-3 mt-1 text-xl"><SafetyOutlined className="text-red-500" /></div>
-                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Hướng dẫn sử dụng</h3><p className="text-gray-700">Bảo quản nơi khô ráo, thoáng mát. Sử dụng theo hướng dẫn trên bao bì.</p></div>
+                <div className="flex-1"><h3 className="font-medium text-gray-800 mb-2">Hướng dẫn sử dụng</h3><p className="text-gray-700">Bảo quản nơi khô ráo, tránh ánh nắng trực tiếp. Vệ sinh bằng khăn ẩm sau mỗi lần sử dụng. Không ngâm nước hoặc giặt máy.</p></div>
               </div>
             </div>
           )}
