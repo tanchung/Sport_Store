@@ -6,7 +6,7 @@
         {
           "type": "header",
           "key": "User-Agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Zalo|SkypeUriPreview|TelegramBot).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Zalo|TelegramBot).*"
         }
       ],
       "destination": "/api/product-og?id=:id"
