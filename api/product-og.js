@@ -1,20 +1,21 @@
 export default async function handler(request, response) {
   const { id } = request.query;
+  const domain = 'https://vnhi-store.vercel.app'; // Domain của bạn
 
-  // Cấu hình mặc định (Fallback) - Dùng khi không lấy được sản phẩm
+  // 1. Cấu hình mặc định (QUAN TRỌNG: URL phải là link sản phẩm, KHÔNG được là trang chủ)
   const defaultData = {
     title: "VNHI Store - Giày Thể Thao Chính Hãng",
     description: "Chuyên cung cấp các loại giày thể thao chính hãng, uy tín, chất lượng cao.",
-    image: "https://vnhi-store.vercel.app/assets/logogiay.png", // Đảm bảo link ảnh này tồn tại
-    url: "https://vnhi-store.vercel.app"
+    image: `${domain}/logogiay.png`, // Đảm bảo file này nằm trong thư mục public
+    url: `${domain}/san-pham/${id}` // <--- SỬA CHỖ NÀY: Luôn trỏ về đúng link sản phẩm
   };
 
   let meta = { ...defaultData };
 
   try {
-    // 1. Gọi API Backend (Thêm timeout để không bị treo quá lâu)
+    // Gọi API Backend
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // Timeout sau 4s
+    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
 
     const apiResponse = await fetch(
       `https://dev.nguyenmanhcuong.id.vn/api/product/${id}`,
@@ -31,31 +32,29 @@ export default async function handler(request, response) {
 
       if (product) {
         meta.title = product.name || defaultData.title;
-        // Xử lý mô tả: Xóa tag HTML, cắt ngắn
         const rawDesc = product.description || defaultData.description;
         meta.description = rawDesc.replace(/<[^>]*>?/gm, '').substring(0, 155) + '...';
         
-        // Xử lý ảnh
         if (product.images && product.images.length > 0) {
           const imgUrl = product.images[0].url;
-          meta.image = imgUrl.startsWith('http') ? imgUrl : `https://vnhi-store.vercel.app${imgUrl}`;
+          // Xử lý nối chuỗi ảnh an toàn
+          meta.image = imgUrl.startsWith('http') ? imgUrl : `${domain}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
         }
         
-        meta.url = `https://vnhi-store.vercel.app/san-pham/${id}`;
-        
-        // Thêm giá tiền vào tiêu đề cho hấp dẫn
         if (product.price) {
            const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
            meta.title = `${meta.title} - ${price}`;
         }
       }
+    } else {
+        console.error("API trả về lỗi:", apiResponse.status);
     }
   } catch (error) {
     console.error("Lỗi khi fetch API sản phẩm:", error);
-    // Không làm gì cả, giữ nguyên meta mặc định để trả về -> Tránh lỗi 500
+    // Code sẽ tự dùng defaultData, nhưng giờ defaultData.url đã đúng là link sản phẩm
   }
 
-  // 2. Trả về HTML tĩnh (Server Side Rendered HTML)
+  // Trả về HTML
   const html = `
     <!DOCTYPE html>
     <html lang="vi">
@@ -71,6 +70,7 @@ export default async function handler(request, response) {
       <meta property="og:image" content="${meta.image}" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
+      <meta property="og:site_name" content="VNHI Store" />
       
       <meta property="og:image:secure_url" content="${meta.image}" />
       <meta name="twitter:card" content="summary_large_image" />
@@ -87,6 +87,7 @@ export default async function handler(request, response) {
   `;
 
   response.setHeader('Content-Type', 'text/html; charset=utf-8');
-  response.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300'); // Cache ngắn hơn để test
+  // Xóa cache cũ ngay lập tức để test
+  response.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); 
   return response.status(200).send(html);
 }
