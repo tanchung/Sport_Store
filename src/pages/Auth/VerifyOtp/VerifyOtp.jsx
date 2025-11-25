@@ -66,50 +66,25 @@ const VerifyOtp = () => {
   };
 
   // Xác thực OTP
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      message.error('Vui lòng nhập mã OTP gồm 6 số');
+  const handleSubmit = async () => {
+    if (otp.length !== 6) {
+      message.warning('Vui lòng nhập đủ 6 số');
       return;
     }
 
     setLoading(true);
     try {
-      // Bước 1: Xác thực OTP
-      const verifyResponse = await AuthService.verifyOtp(email, otp);
+      const result = await AuthService.verifyOTP(email, otp);
       
-      if (verifyResponse.success) {
-        // Bước 2: Đăng ký tài khoản sau khi OTP đã được xác thực
-        const signupData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          avatar: formData.avatar || "",
-          permanentAddress: formData.address || "",
-          gender: formData.gender || "Nam",
-          dateOfBirth: formData.dateOfBirth || new Date().toISOString().split('T')[0],
-          email: email,
-          username: formData.username,
-          password: formData.password
-        };
-
-        const signupResponse = await AuthService.signup(signupData);
-        
-        if (signupResponse.success) {
-          message.success('Đăng ký thành công! Chào mừng bạn đến với cửa hàng sữa tươi');
-          navigate('/dang-nhap');
-        } else {
-          message.error(signupResponse.message || 'Đăng ký thất bại, vui lòng thử lại');
-        }
+      if (result.success) {
+        message.success('Xác thực thành công!');
+        navigate('/nhan-tin-quang-cao');
       } else {
-        message.error(verifyResponse.message || 'Mã OTP không hợp lệ hoặc đã hết hạn');
+        message.error(result.message || 'Mã OTP không hợp lệ');
       }
     } catch (error) {
       console.error('Lỗi xác thực OTP:', error);
-      if (error.response?.status === 400) {
-        message.error('Mã OTP không hợp lệ hoặc đã hết hạn');
-      } else {
-        message.error('Xác thực thất bại, vui lòng thử lại sau');
-      }
+      message.error('Có lỗi xảy ra khi xác thực');
     } finally {
       setLoading(false);
     }
@@ -176,8 +151,8 @@ const VerifyOtp = () => {
           </p>
         </div>
 
-        <Form onFinish={handleVerifyOtp} className="space-y-6">
-          <div>
+        <Form onFinish={handleSubmit} className="space-y-6">
+          <Form.Item>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Mã xác thực (6 số)
             </label>
@@ -188,8 +163,9 @@ const VerifyOtp = () => {
               className="h-12 text-center text-lg tracking-widest"
               maxLength={6}
               style={{ letterSpacing: '0.5em' }}
+              onPressEnter={handleSubmit}
             />
-          </div>
+          </Form.Item>
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button

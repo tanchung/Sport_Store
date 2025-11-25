@@ -3,7 +3,6 @@ import { Form, message, Steps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import RegisterForm from './components/RegisterForm';
 import OtpModal from './components/OtpModal';
-import { useAuth } from '../../../context/AuthContext';
 import AuthService from '../../../services/Auth/AuthServices';
 import dayjs from 'dayjs';
 
@@ -77,10 +76,11 @@ function Register() {
       const response = await AuthService.verifyCode(verifyData);
 
       if (response.data.success) {
-        message.success('Xác thực thành công! Bạn có thể đăng nhập.');
+        message.success('Xác thực thành công!');
         setOtpModalVisible(false);
         setCurrentStep(0);
-        navigate('/dang-nhap');
+        // Chuyển đến trang đăng ký nhận tin marketing
+        navigate('/nhan-tin-quang-cao', { state: { email: email } });
       } else {
         message.error('Mã OTP không hợp lệ');
       }
@@ -204,15 +204,15 @@ function Register() {
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-white text-center p-6">
-              <h2 className="text-2xl font-bold mb-2">Sản phẩm sữa tươi ngon</h2>
-              <p>Chất lượng cao, giao hàng tận nơi</p>
+            <div className="text-center p-6">
+              <h2 className="text-white text-3xl font-bold mb-2">Sản phẩm sữa tươi ngon</h2>
+              <p className="text-white text-lg">Chất lượng cao, giao hàng tận nơi</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* OTP Modal */}
+      {/* OTP Modal - Xác thực mã OTP */}
       <OtpModal
         visible={otpModalVisible}
         onCancel={() => {

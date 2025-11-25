@@ -54,40 +54,14 @@ const ProductDetail = () => {
     };
     fetchProduct();
   }, [id]);
-
-  // Initialize ShareThis buttons after product loads
   useEffect(() => {
-    if (!product) return;
-
-    const initShareThis = () => {
-      if (window.__sharethis__ && window.__sharethis__.initialize) {
-        console.log('Initializing ShareThis...');
-        window.__sharethis__.initialize();
-      } else {
-        console.log('ShareThis not ready yet');
-      }
-    };
-
-    // Try to initialize immediately
-    initShareThis();
-
-    // Also listen for the script load event
-    const script = document.querySelector('script[src*="sharethis"]');
-    if (script) {
-      script.addEventListener('load', () => {
-        setTimeout(initShareThis, 200);
-      });
+    if (product && window.__sharethis__) {
+      // Đợi 1 chút để Helmet kịp cập nhật thẻ meta tag vào <head>
+      setTimeout(() => {
+         window.__sharethis__.initialize();
+      }, 1000);
     }
-
-    // Fallback: try again after a delay
-    const timer = setTimeout(initShareThis, 500);
-    const timer2 = setTimeout(initShareThis, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-    };
-  }, [product]);
+  }, [product, id]);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
@@ -226,23 +200,29 @@ const ProductDetail = () => {
       </nav>
 
       {/* Product Main */}
+      {/* Product Main */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <ProductImages product={product} />
-          <ProductInfo product={product} />
-        </div>
-
-        {/* ShareThis Integration */}
-        <div className="mt-6 border-t pt-4">
-          <h4 className="text-gray-700 font-medium mb-3">Chia sẻ sản phẩm này:</h4>
           
-          {/* ShareThis BEGIN - Using SOP (ShareThis Onsite Platform) */}
-          <div className="sharethis-inline-share-buttons" 
-               data-url={canonicalUrl}
-               data-title={productName}
-               data-description={productDescription}
-               data-image={productImageUrl}></div>
-          {/* ShareThis END */}
+          {/* --- BẮT ĐẦU SỬA TỪ ĐÂY --- */}
+          <div>
+            <ProductInfo product={product} />
+            
+            {/* Đây là chỗ đặt nút ShareThis Inline */}
+            {/* mt-6 để tạo khoảng cách với nút mua hàng bên trên */}
+            <div className="mt-6">
+                <p className="text-sm font-medium text-gray-500 mb-2">Chia sẻ sản phẩm:</p>
+                <div className="sharethis-inline-share-buttons"
+                  data-url={canonicalUrl}          // Link sản phẩm
+                  data-title={productName}         // Tên sản phẩm
+                  data-image={productImageUrl}     // Hình ảnh (bắt buộc phải là link tuyệt đối http...)
+                  data-description={productDescription} // Mô tả ngắn
+                ></div>
+            </div>
+          </div>
+          {/* --- KẾT THÚC SỬA --- */}
+
         </div>
       </div>
 
@@ -363,12 +343,12 @@ const ProductDetail = () => {
 
           {activeTab === 'specifications' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Thương hiệu:</span> <span className="text-gray-600">{product.brand?.name || product.brand || 'Không có thông tin'}</span></div>
-              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Loại sản phẩm:</span> <span className="text-gray-600">{product.category || 'Sữa'}</span></div>
+              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Thương hiệu:</span> <span className="text-gray-600">{typeof product.brand === 'object' ? product.brand?.name : product.brand || 'Không có thông tin'}</span></div>
+              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Loại sản phẩm:</span> <span className="text-gray-600">{typeof product.category === 'object' ? product.category?.name : product.category || 'Sữa'}</span></div>
               <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Mã SKU:</span> <span className="text-gray-600">{product.sku || 'Không có thông tin'}</span></div>
               <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Mã vạch:</span> <span className="text-gray-600">{product.barcode || 'Không có thông tin'}</span></div>
-              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Đơn vị:</span> <span className="text-gray-600">{product.unit?.name || product.unit || 'Không có thông tin'}</span></div>
-              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Trạng thái:</span> <span className="text-gray-600">{product.status?.name || product.status || 'Đang hoạt động'}</span></div>
+              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Đơn vị:</span> <span className="text-gray-600">{typeof product.unit === 'object' ? product.unit?.name : product.unit || 'Không có thông tin'}</span></div>
+              <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Trạng thái:</span> <span className="text-gray-600">{typeof product.status === 'object' ? product.status?.name : product.status || 'Đang hoạt động'}</span></div>
               <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Số lượng kho:</span> <span className="text-gray-600">{product.stockQuantity || 0}</span></div>
               {dimension && <>
                 <div className="flex border-b border-gray-100 py-2"><span className="font-medium w-32">Chiều dài:</span> <span className="text-gray-600">{dimension.lengthValue || 0} cm</span></div>
