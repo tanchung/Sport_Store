@@ -1,13 +1,11 @@
 export default async function handler(request, response) {
   const { id } = request.query;
-  const domain = 'https://vnhi-store.vercel.app';
+  const domain = 'https://vnhi-store.vercel.app'; 
 
-  // --- ĐÂY LÀ LINK API TỪ ẢNH BẠN GỬI ---
-  // Tôi đã thay số 17 thành ${id} để nó động
+  // Link API thật (Link ngrok bạn gửi lúc nãy)
   const API_URL = `https://unrealistic-elton-denunciable.ngrok-free.dev/api/products/getproduct/${id}/id`; 
-  // ----------------------------------------
 
-  // Cấu hình mặc định (Phòng khi API lỗi/ngrok tắt thì vẫn hiện web đẹp)
+  // Dữ liệu DỰ PHÒNG (Chỉ dùng khi API bị lỗi hoặc sập)
   const defaultData = {
     title: "VNHI Store - Giày Thể Thao Chính Hãng",
     description: "Chuyên cung cấp giày thể thao uy tín, chất lượng cao.",
@@ -19,9 +17,8 @@ export default async function handler(request, response) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 giây timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); 
 
-    // Thêm header ngrok-skip-browser-warning để tránh màn hình chờ của ngrok
     const apiResponse = await fetch(API_URL, { 
         signal: controller.signal,
         headers: { 
@@ -34,38 +31,46 @@ export default async function handler(request, response) {
     if (apiResponse.ok) {
       const data = await apiResponse.json();
       
-      // Vì không biết chính xác data trả về nằm ở đâu, tôi check cả 3 trường hợp phổ biến
-      const product = data.result || data.data || data; 
+      // --- SỬA CHO KHỚP VỚI ẢNH JSON BẠN GỬI ---
+      // Dữ liệu nằm trong result -> content (mảng) -> lấy phần tử đầu tiên [0]
+      const product = data?.result?.content?.[0]; 
 
       if (product) {
-        meta.title = product.name || defaultData.title;
+        // 1. Tên sản phẩm
+        const productName = product.name || defaultData.title;
         
-        // Xử lý mô tả
+        // 2. Giá tiền
+        let priceString = '';
+        if (product.price) {
+            priceString = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
+        }
+        meta.title = priceString ? `${productName} - ${priceString}` : productName;
+
+        // 3. Mô tả
         const rawDesc = product.description || defaultData.description;
         meta.description = rawDesc.replace(/<[^>]*>?/gm, '').substring(0, 155) + '...';
         
-        // Xử lý ảnh
+        // 4. Ảnh (QUAN TRỌNG: Sửa .url thành .downloadUrl như trong ảnh)
         if (product.images && product.images.length > 0) {
-           const imgUrl = product.images[0].url;
-           if (imgUrl.startsWith('http')) {
-               meta.image = imgUrl;
-           } else {
-               meta.image = `${domain}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+           // Trong ảnh JSON bạn gửi, trường này tên là downloadUrl
+           const imgUrl = product.images[0].downloadUrl; 
+           
+           if (imgUrl) {
+               if (imgUrl.startsWith('http')) {
+                   meta.image = imgUrl;
+               } else {
+                   meta.image = `${domain}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+               }
            }
-        }
-        
-        // Giá tiền
-        if (product.price) {
-            const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
-            meta.title = `${meta.title} - ${price}`;
         }
       }
     }
   } catch (error) {
-    console.error("Lỗi lấy dữ liệu:", error.message);
+    console.error("Lỗi:", error.message);
+    // Nếu lỗi thì nó tự giữ nguyên cái defaultData (logogiay) để không bị trắng trang
   }
 
-  // Trả về HTML cho Facebook
+  // Trả về HTML
   const html = `
     <!DOCTYPE html>
     <html lang="vi">
