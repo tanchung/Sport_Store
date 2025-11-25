@@ -1,17 +1,17 @@
 {
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
     {
       "source": "/(.*)",
-      "has": [
+      "headers": [
         {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot).*"
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
-      ],
-      "destination": "https://service.prerender.io/https://milk-store-three.vercel.app/$1"
-    },
-    { "source": "/(.*)", "destination": "/index.html" }
+      ]
+    }
   ]
 }
