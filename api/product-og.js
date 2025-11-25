@@ -1,60 +1,71 @@
 export default async function handler(request, response) {
   const { id } = request.query;
-  const domain = 'https://vnhi-store.vercel.app'; // Domain của bạn
+  const domain = 'https://vnhi-store.vercel.app';
 
-  // 1. Cấu hình mặc định (QUAN TRỌNG: URL phải là link sản phẩm, KHÔNG được là trang chủ)
+  // --- ĐÂY LÀ LINK API TỪ ẢNH BẠN GỬI ---
+  // Tôi đã thay số 17 thành ${id} để nó động
+  const API_URL = `https://unrealistic-elton-denunciable.ngrok-free.dev/api/products/getproduct/${id}/id`; 
+  // ----------------------------------------
+
+  // Cấu hình mặc định (Phòng khi API lỗi/ngrok tắt thì vẫn hiện web đẹp)
   const defaultData = {
     title: "VNHI Store - Giày Thể Thao Chính Hãng",
-    description: "Chuyên cung cấp các loại giày thể thao chính hãng, uy tín, chất lượng cao.",
-    image: `${domain}/logogiay.png`, // Đảm bảo file này nằm trong thư mục public
-    url: `${domain}/san-pham/${id}` // <--- SỬA CHỖ NÀY: Luôn trỏ về đúng link sản phẩm
+    description: "Chuyên cung cấp giày thể thao uy tín, chất lượng cao.",
+    image: `${domain}/logogiay.png`, 
+    url: `${domain}/san-pham/${id}`
   };
 
   let meta = { ...defaultData };
 
   try {
-    // Gọi API Backend
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 giây timeout
 
-    const apiResponse = await fetch(
-      `https://dev.nguyenmanhcuong.id.vn/api/product/${id}`,
-      { 
+    // Thêm header ngrok-skip-browser-warning để tránh màn hình chờ của ngrok
+    const apiResponse = await fetch(API_URL, { 
         signal: controller.signal,
-        headers: { 'User-Agent': 'Vercel-Edge-Function' }
-      }
-    );
+        headers: { 
+            'User-Agent': 'Mozilla/5.0 (Compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+            'ngrok-skip-browser-warning': 'true' 
+        }
+    });
     clearTimeout(timeoutId);
 
     if (apiResponse.ok) {
       const data = await apiResponse.json();
-      const product = data.result;
+      
+      // Vì không biết chính xác data trả về nằm ở đâu, tôi check cả 3 trường hợp phổ biến
+      const product = data.result || data.data || data; 
 
       if (product) {
         meta.title = product.name || defaultData.title;
+        
+        // Xử lý mô tả
         const rawDesc = product.description || defaultData.description;
         meta.description = rawDesc.replace(/<[^>]*>?/gm, '').substring(0, 155) + '...';
         
+        // Xử lý ảnh
         if (product.images && product.images.length > 0) {
-          const imgUrl = product.images[0].url;
-          // Xử lý nối chuỗi ảnh an toàn
-          meta.image = imgUrl.startsWith('http') ? imgUrl : `${domain}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+           const imgUrl = product.images[0].url;
+           if (imgUrl.startsWith('http')) {
+               meta.image = imgUrl;
+           } else {
+               meta.image = `${domain}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+           }
         }
         
+        // Giá tiền
         if (product.price) {
-           const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
-           meta.title = `${meta.title} - ${price}`;
+            const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
+            meta.title = `${meta.title} - ${price}`;
         }
       }
-    } else {
-        console.error("API trả về lỗi:", apiResponse.status);
     }
   } catch (error) {
-    console.error("Lỗi khi fetch API sản phẩm:", error);
-    // Code sẽ tự dùng defaultData, nhưng giờ defaultData.url đã đúng là link sản phẩm
+    console.error("Lỗi lấy dữ liệu:", error.message);
   }
 
-  // Trả về HTML
+  // Trả về HTML cho Facebook
   const html = `
     <!DOCTYPE html>
     <html lang="vi">
@@ -87,7 +98,6 @@ export default async function handler(request, response) {
   `;
 
   response.setHeader('Content-Type', 'text/html; charset=utf-8');
-  // Xóa cache cũ ngay lập tức để test
-  response.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); 
+  response.setHeader('Cache-Control', 'no-cache, no-store'); 
   return response.status(200).send(html);
 }
