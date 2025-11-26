@@ -46,7 +46,7 @@ export default async function handler(request, response) {
         
         // Xử lý ảnh
         if (product.images && product.images.length > 0) {
-           const imgUrl = product.images[0].url;
+           const imgUrl = product.images[0].downloadUrl;
            if (imgUrl.startsWith('http')) {
                meta.image = imgUrl;
            } else {

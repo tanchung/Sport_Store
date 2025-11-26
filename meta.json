@@ -1,0 +1,500 @@
+{
+  "code": 200,
+  "message": "success",
+  "result": [
+    {
+      "id": 1,
+      "name": "Giày bóng đá Nike Mercurial Superfly",
+      "brand": "Nike",
+      "price": 2999000,
+      "inventory": 135,
+      "description": "Giày bóng đá Nike Mercurial Superfly với thiết kế nhẹ, độ bám tối ưu trên sân cỏ nhân tạo.",
+      "collectionId": null,
+      "category": {
+        "id": 1,
+        "name": "sân Cỏ Nhân Tạo"
+      },
+      "images": [
+        {
+          "imageId": 7,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993818/zisvdr0pm9qhdkmdmjx0.jpg"
+        },
+        {
+          "imageId": 8,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993824/tapnv6ht1aqhurp6izvw.jpg"
+        },
+        {
+          "imageId": 9,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993828/hx78usoa6l7fkhazmuwh.jpg"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Giày bóng đá Puma Future Z",
+      "brand": "Puma",
+      "price": 2599000,
+      "inventory": 71,
+      "description": "Giày bóng đá Puma Future Z với khả năng hỗ trợ tăng tốc và kiểm soát bóng tốt.",
+      "collectionId": null,
+      "category": {
+        "id": 2,
+        "name": "sân Futsal"
+      },
+      "images": [
+        {
+          "imageId": 43,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915573/vo6fpoqmllkfr9gw3lb5.jpg"
+        },
+        {
+          "imageId": 44,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915575/f6khxv6eed6urhhsml5r.jpg"
+        },
+        {
+          "imageId": 45,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915578/a50bwygha6bcssfjzqk9.jpg"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Giày bóng đá Adidas Predator Edge",
+      "brand": "Adidas",
+      "price": 2799000,
+      "inventory": 76,
+      "description": "Giày bóng đá Adidas Predator Edge với công nghệ kiểm soát bóng tối ưu.",
+      "collectionId": null,
+      "category": {
+        "id": 1,
+        "name": "sân Cỏ Nhân Tạo"
+      },
+      "images": [
+        {
+          "imageId": 5,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993777/bjxcz6duow4nyw3vx4eu.jpg"
+        },
+        {
+          "imageId": 6,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993794/tssuwnr9if4tcnum2iut.jpg"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Giày bóng đá Adidas Predator Edge",
+      "brand": "Adidas",
+      "price": 2799000,
+      "inventory": 88,
+      "description": "Giày bóng đá Adidas Predator Edge với công nghệ kiểm soát bóng tối ưu.",
+      "collectionId": null,
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 10,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993835/ps8d3b6cqzla4l5ycpvq.jpg"
+        },
+        {
+          "imageId": 11,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993840/dldlohyv2movfwono6ez.jpg"
+        },
+        {
+          "imageId": 12,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754993844/qtsu4zjnaoq3uriu60y4.jpg"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Giày bóng đá Puma Future Z",
+      "brand": "Puma",
+      "price": 2599000,
+      "inventory": 100,
+      "description": "Giày bóng đá Puma Future Z với thiết kế linh hoạt và hỗ trợ tối đa khả năng di chuyển.",
+      "collectionId": null,
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 13,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754913036/flvcg81ras2hb7b894nh.jpg"
+        },
+        {
+          "imageId": 14,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754913038/z9svzidaqmnhwzt2hwnu.jpg"
+        },
+        {
+          "imageId": 15,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754913041/geommfxmfgayevjetojx.jpg"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Giày bóng đá Mizuno Morelia Neo III",
+      "brand": "Mizuno",
+      "price": 3299000,
+      "inventory": 100,
+      "description": "Giày bóng đá Mizuno Morelia Neo III nhẹ, ôm chân và mang lại cảm giác bóng tuyệt vời.",
+      "collectionId": null,
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 16,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914950/fxxtp0vdbkrcwd5zpkdd.jpg"
+        },
+        {
+          "imageId": 17,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914952/t73mchmgi8x4h7bcv510.jpg"
+        },
+        {
+          "imageId": 18,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914954/u9ipndzpwq2ljcebh46x.jpg"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Giày bóng đá Puma Future Z",
+      "brand": "Puma",
+      "price": 2599000,
+      "inventory": 100,
+      "description": "Giày bóng đá Puma Future Z với thiết kế linh hoạt và hỗ trợ tối đa khả năng di chuyển.",
+      "collectionId": null,
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 19,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914961/e6oyjivsr1cmr9lvy8bj.jpg"
+        },
+        {
+          "imageId": 20,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914963/zm3brhhlumowchprzngj.jpg"
+        },
+        {
+          "imageId": 21,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914965/swdfvhequfuki6qo0hky.jpg"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Giày bóng đá Kamito Velocidad",
+      "brand": "Kamito",
+      "price": 899000,
+      "inventory": 100,
+      "description": "Giày bóng đá Kamito Velocidad thiết kế hiện đại, bền bỉ, phù hợp cho mọi cấp độ thi đấu.",
+      "collectionId": null,
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 22,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914970/zojhbhgqknkpoxkmg6td.jpg"
+        },
+        {
+          "imageId": 23,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914972/yritduyybs8ubpm4nabm.jpg"
+        },
+        {
+          "imageId": 24,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914974/bbp6ue58nzlntqoifeyx.jpg"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Giày bóng đá Jogarbola Pro X",
+      "brand": "Jogarbola",
+      "price": 1289000,
+      "inventory": 100,
+      "description": "Giày bóng đá Jogarbola Pro X với chất liệu cao cấp, mang lại sự thoải mái và độ bám tối ưu.",
+      "collectionId": "FUTSAL BOOT",
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 25,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914979/nqtabavw2egdkvkfjwh9.jpg"
+        },
+        {
+          "imageId": 26,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914981/tziujjgk4oxfpbxess3r.jpg"
+        },
+        {
+          "imageId": 27,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754914983/eprvvaojprupwvur8fj1.jpg"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Giày bóng đá Jogarbola Pro IX",
+      "brand": "Jogarbola",
+      "price": 1299000,
+      "inventory": 98,
+      "description": "Giày bóng đá Jogarbola Pro X với chất liệu cao cấp, mang lại sự thoải mái và độ bám tối ưu.",
+      "collectionId": "FUTSAL BOOT",
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 28,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915141/idwzx16ua9ckrtafbesm.jpg"
+        },
+        {
+          "imageId": 29,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915143/odwlszkj8jp5glz7ozt7.jpg"
+        },
+        {
+          "imageId": 30,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915145/tl8ujifwjxfu5gfg1dfa.jpg"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Giày bóng đá Jogarbola Pro XI",
+      "brand": "Jogarbola",
+      "price": 1299000,
+      "inventory": 100,
+      "description": "Giày bóng đá Jogarbola Pro X với chất liệu cao cấp, mang lại sự thoải mái và độ bám tối ưu.",
+      "collectionId": "AUDACITY PACK",
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 31,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915155/c3yekgkfx9mzjc01jhrl.jpg"
+        },
+        {
+          "imageId": 32,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915157/tujruazlmxpnpjd4257f.jpg"
+        },
+        {
+          "imageId": 33,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915158/liyynegdkyaacnarhskr.jpg"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Giày bóng đá Jogarbola Pro VV",
+      "brand": "Jogarbola",
+      "price": 1499000,
+      "inventory": 99,
+      "description": "Giày bóng đá Jogarbola Pro X với chất liệu cao cấp, mang lại sự thoải mái và độ bám tối ưu.",
+      "collectionId": "AUDACITY PACK",
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 34,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915164/qo2ld8xcgvechcfud4bc.jpg"
+        },
+        {
+          "imageId": 35,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915166/vc3mfj2q6usyitwsgum5.jpg"
+        },
+        {
+          "imageId": 36,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915168/jpckyyluhugzjfde7ltl.jpg"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Giày bóng đá Jogarbola Pro VNHI",
+      "brand": "Jogarbola",
+      "price": 1399000,
+      "inventory": 100,
+      "description": "Giày bóng đá Jogarbola Pro X với chất liệu cao cấp, mang lại sự thoải mái và độ bám tối ưu.",
+      "collectionId": "SELECTIAL VICTORY PACK",
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 40,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915208/kxeqjhtbus46fo9rysdt.jpg"
+        },
+        {
+          "imageId": 41,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915210/c1yr9141r6a4toryuhm6.jpg"
+        },
+        {
+          "imageId": 42,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1754915212/rfoxle6rbd7sooa33qn9.jpg"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "ADIDAS PREDATOR 25 LEAGUE LƯỠI GÀ LẬT TF - JS0385 - TRẮNG/HỒNG",
+      "brand": "Adidas",
+      "price": 2000,
+      "inventory": -46,
+      "description": "Giày bóng đá Adidas Predator 25 League lưỡi gà lật TF, màu trắng/hồng, hỗ trợ kiểm soát bóng tối ưu và cảm giác thoải mái khi thi đấu.",
+      "collectionId": "SELECTIAL VICTORY PACK",
+      "category": {
+        "id": 3,
+        "name": "sân Cỏ Thật"
+      },
+      "images": [
+        {
+          "imageId": 51,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5297d2e843ed4920a2eb9426c00cd81c_9366/Predator_League_Turf_Boots_Kids_White_ID3801_01_00_standard_hover.jpg"
+        },
+        {
+          "imageId": 52,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5297d2e843ed4920a2eb9426c00cd81c_9366/Predator_League_Turf_Boots_Kids_White_ID3801_01_00_standard_hover.jpg"
+        },
+        {
+          "imageId": 53,
+          "imageName": "puma-shoe.jpg",
+          "downloadUrl": "https://assets.adidas.com/images/e_trim:EAEEEF/c_lpad,w_iw,h_ih/b_rgb:EAEEEF/w_180,f_auto,q_auto,fl_lossy,c_fill,g_auto/fdf698cc86384770b749a1485a0cc068_9366/Predator_League_Turf_Boots_Kids_White_ID3801_22_model.jpg"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "gg",
+      "brand": "gg",
+      "price": 100000,
+      "inventory": 1,
+      "description": "gg",
+      "collectionId": "SELECTIAL VICTORY PACK",
+      "category": {
+        "id": 1,
+        "name": "sân Cỏ Nhân Tạo"
+      },
+      "images": []
+    },
+    {
+      "id": 17,
+      "name": "giày bóng đá",
+      "brand": "nike",
+      "price": 200000,
+      "inventory": 100,
+      "description": "không có",
+      "collectionId": "SELECTIAL VICTORY PACK",
+      "category": {
+        "id": 1,
+        "name": "sân Cỏ Nhân Tạo"
+      },
+      "images": [
+        {
+          "imageId": 54,
+          "imageName": "Ảnh chụp màn hình 2025-10-03 134758.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1762864443/fwfjypkulo7sqoki57fy.png"
+        },
+        {
+          "imageId": 56,
+          "imageName": "Ảnh chụp màn hình 2025-10-04 132039.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1762865464/ypud7pkgaxmmu5covaa8.png"
+        },
+        {
+          "imageId": 57,
+          "imageName": "Ảnh chụp màn hình 2025-10-07 083617.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1762865563/m4vkwcihrwp06ohyqe3y.png"
+        },
+        {
+          "imageId": 58,
+          "imageName": "Ảnh chụp màn hình 2025-10-07 094659.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1762865712/a1tjaao5mbd84izma1df.png"
+        },
+        {
+          "imageId": 59,
+          "imageName": "Ảnh chụp màn hình 2025-10-07 094659.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1762865977/u9rgxjsn04lbxjqwml44.png"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "nn",
+      "brand": "nbn",
+      "price": 100000,
+      "inventory": 20,
+      "description": "nnn",
+      "collectionId": "SELECTIAL VICTORY PACK",
+      "category": {
+        "id": 1,
+        "name": "sân Cỏ Nhân Tạo"
+      },
+      "images": [
+        {
+          "imageId": 60,
+          "imageName": "Ảnh chụp màn hình 2025-10-03 134758.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1763016216/swp0ekffeqfbjho0q9px.png"
+        },
+        {
+          "imageId": 61,
+          "imageName": "Ảnh chụp màn hình 2025-10-03 135054.png",
+          "downloadUrl": "https://res.cloudinary.com/dwbcqjupj/image/upload/v1763016218/lfo5ed69fwgxxz1c3w8i.png"
+        }
+      ]
+    }
+  ]
+}

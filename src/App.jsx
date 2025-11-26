@@ -55,35 +55,26 @@ const AuthRoute = ({ children }) => {
 };
 
 // =================================================================
-// === HÀM HỖ TRỢ: XÓA SẠCH COOKIE/STORAGE CỦA TAWK.TO ===
-// =================================================================
+// --- Helper: Clear Tawk.to Data for Guest ---
 const clearTawkData = () => {
   try {
-    // 1. Xóa LocalStorage và SessionStorage
-    const storageTypes = ['localStorage', 'sessionStorage'];
-    storageTypes.forEach(type => {
+    ['localStorage', 'sessionStorage'].forEach(type => {
       const storage = window[type];
       Object.keys(storage).forEach(key => {
-        // Tawk thường dùng key bắt đầu bằng 'tawk' hoặc 'twk'
         if (key.toLowerCase().includes('tawk') || key.toLowerCase().includes('twk')) {
           storage.removeItem(key);
         }
       });
     });
 
-    // 2. Xóa Cookies
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i];
+    document.cookie.split(";").forEach(cookie => {
       const eqPos = cookie.indexOf("=");
       const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-      
       if (name.toLowerCase().includes('tawk') || name.toLowerCase().includes('twk')) {
-        // Xóa bằng cách set ngày hết hạn về quá khứ
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
       }
-    }
+    });
   } catch (e) {
     console.error("Lỗi khi xóa dữ liệu Tawk:", e);
   }
@@ -92,73 +83,67 @@ const clearTawkData = () => {
 // --- Layout ---
 const Layout = ({ children }) => {
   const location = useLocation();
-  const { user, loading } = useAuth(); // Lấy loading từ Context thật
+  const { currentUser, loading } = useAuth();
   const tawkRef = useRef();
-  
+
   const hideHeaderRoutes = ['/dang-nhap', '/dang-ky', '/quen-mat-khau', '/reset-password', '/not-found'];
   const [widgetKey, setWidgetKey] = useState(Date.now());
   const [visitorId, setVisitorId] = useState('');
 
-  // --- LOGIC QUAN TRỌNG: XỬ LÝ TRẠNG THÁI USER/GUEST ---
+  // --- User / Guest Logic ---
   useEffect(() => {
-    // 1. Nếu đang loading (đang check token, gọi API user info...) -> Dừng lại, không làm gì cả.
-    // Điều này ngăn chặn việc xóa nhầm cookie khi user nhấn F5.
     if (loading) return;
 
-    if (user) {
-      // === TRƯỜNG HỢP: USER ĐÃ ĐĂNG NHẬP ===
-      setVisitorId(user._id || user.id);
-      // KHÔNG đổi widgetKey -> Giữ nguyên session chat hiện tại
+    if (currentUser) {
+      setVisitorId("user_" + currentUser.id);
     } else {
-      // === TRƯỜNG HỢP: KHÁCH (GUEST) ===
-      
-      // Xóa sạch dữ liệu cũ để Tawk quên phiên chat trước đó
       clearTawkData();
-
-      // Tạo ID mới cho khách
-      const newVisitorId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      setVisitorId(newVisitorId);
-      
-      // Đổi widgetKey -> Buộc Component Tawk render lại từ đầu với ID mới
+      setVisitorId("guest_" + Date.now());
       setWidgetKey(Date.now());
     }
-  }, [user, loading]);
+  }, [currentUser, loading]);
 
-  // Set thông tin khi Widget load xong
+  // --- Set Tawk Attributes ---
   const handleOnLoad = useCallback(() => {
     if (!tawkRef.current) return;
-    
-    if (user) {
+
+    if (currentUser) {
       tawkRef.current.setAttributes({
-        name: user.fullName || user.name || "Khách hàng",
-        email: user.email,
-        id: visitorId,
-        phone: user.phone || "",
-        hash: user.hash // Nếu bạn có dùng Secure Mode thì truyền hash vào đây
-      }, (error) => {});
+        name: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
+        email: currentUser.email,
+        phone: currentUser.phone || "",
+        userId: String(currentUser.id),
+        role: currentUser.roles?.[0]?.name || "ROLE_USER",
+        avatar: currentUser.avatar || undefined,
+      }, () => {});
     } else {
       tawkRef.current.setAttributes({
-        name: 'Khách tham quan',
-        email: '',
-        id: visitorId,
-        phone: ''
-      }, (error) => {});
+        name: "Khách tham quan",
+        userId: visitorId,
+      }, () => {});
     }
-  }, [user, visitorId]);
+  }, [currentUser, visitorId]);
 
   const shouldShowChat = () => {
     const path = location.pathname;
-    const allowed = ['/', '/trang-chu', '/san-pham', '/gio-hang', '/thanh-toan', '/lien-he', '/huong-dan-mua-hang', '/chinh-sach-doi-tra', '/bo-suu-tap', '/don-hang'];
-    return allowed.some(prefix => path === '/' || path.startsWith(prefix));
+    const allowed = [
+      '/trang-chu',
+      '/san-pham',
+      '/gio-hang',
+      '/thanh-toan',
+      '/lien-he',
+      '/huong-dan-mua-hang',
+      '/chinh-sach-doi-tra',
+      '/bo-suu-tap',
+      '/don-hang'
+    ];
+    return path === '/' || allowed.some(prefix => path.startsWith(prefix));
   };
 
   return (
     <>
       {!hideHeaderRoutes.includes(location.pathname) && <Header />}
-      
       {children}
-      
-      {/* Chỉ hiển thị Chat khi đã xác định được ID và KHÔNG còn loading */}
       {shouldShowChat() && visitorId && !loading && (
         <TawkMessengerReact
           key={widgetKey}
@@ -168,7 +153,6 @@ const Layout = ({ children }) => {
           onLoad={handleOnLoad}
         />
       )}
-      
       {!hideHeaderRoutes.includes(location.pathname) && <Footer />}
     </>
   );
