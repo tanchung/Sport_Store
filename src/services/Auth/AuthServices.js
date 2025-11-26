@@ -279,9 +279,29 @@ class AuthService {
             .then(response => {
                 const data = response.data;
 
+                // Backend có thể trả về nhiều format khác nhau
+                let newAccessToken = null;
+                
+                // Format 1: {success: true, accessToken: "..."}
                 if (data.success && data.accessToken) {
-                    CookieService.setAccessToken(data.accessToken);
-                    return data;
+                    newAccessToken = data.accessToken;
+                }
+                // Format 2: {code: 200, result: {access_token: "..."}}
+                else if (data.code === 200 && data.result?.access_token) {
+                    newAccessToken = data.result.access_token;
+                    // Update refresh token if provided
+                    if (data.result.refresh_token) {
+                        CookieService.setRefreshToken(data.result.refresh_token);
+                    }
+                }
+                // Format 3: Direct accessToken field
+                else if (data.accessToken) {
+                    newAccessToken = data.accessToken;
+                }
+                
+                if (newAccessToken) {
+                    CookieService.setAccessToken(newAccessToken);
+                    return { success: true, accessToken: newAccessToken };
                 } else {
                     this.logout();
                     throw new Error('Refresh token không hợp lệ');

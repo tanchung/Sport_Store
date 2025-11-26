@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug JWT Token</title>
+</head>
+<body>
+    <h1>Debug JWT Token</h1>
+    <script>
+        const refreshToken = "eyJhbGciOiJIUzUxMiJ9.eyJqdGkiOiJiM2VlYmY5NS04MTc3LTRhZDQtYjViYy1kOGI1M2IwZjFjODIiLCJzdWIiOiJoaWV1QDEyMzQiLCJpYXQiOjE3NjQxNzg5NDQsImV4cCI6MTc2NDc4Mzc0NCwiUm9sZSI6IiJ9.6hO2SJxtfSJAQ7toaRodTL9mCbNX_GV8yqpYzOe3jnajOVd-5ry0Noj7AYHxEHGOUjrHkTjqqzb2SsFpFBFK5A";
+        
+        const payload = JSON.parse(atob(refreshToken.split('.')[1]));
+        const issuedAt = new Date(payload.iat * 1000);
+        const expiresAt = new Date(payload.exp * 1000);
+        const now = new Date();
+        
+        console.log('🔑 Refresh Token Info:');
+        console.log('Issued at:', issuedAt.toLocaleString());
+        console.log('Expires at:', expiresAt.toLocaleString());
+        console.log('Current time:', now.toLocaleString());
+        console.log('Time until expiry:', Math.floor((expiresAt - now) / 1000 / 60 / 60), 'hours');
+        console.log('Is expired:', now > expiresAt);
+        
+        document.body.innerHTML += `
+            <p><strong>Issued at:</strong> ${issuedAt.toLocaleString()}</p>
+            <p><strong>Expires at:</strong> ${expiresAt.toLocaleString()}</p>
+            <p><strong>Current time:</strong> ${now.toLocaleString()}</p>
+            <p><strong>Time until expiry:</strong> ${Math.floor((expiresAt - now) / 1000 / 60 / 60)} hours</p>
+            <p><strong>Is expired:</strong> ${now > expiresAt ? '❌ YES' : '✅ NO'}</p>
+        `;
+    </script>
+</body>
+</html>

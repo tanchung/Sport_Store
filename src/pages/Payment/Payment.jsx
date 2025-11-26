@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { FaCheckCircle, FaCreditCard, FaMoneyBillWave } from 'react-icons/fa'
+import { FaCheckCircle, FaCreditCard, FaMoneyBillWave, FaPaypal } from 'react-icons/fa'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import OrderSummary from './components/OrderSummary'
 import VoucherBox from './components/VoucherBox'
 import OrderService from '@services/Order/OrderService'
 import CartService from '@services/Cart/CartService'
 import PaymentService from '@services/Payment/PaymentService'
+import PayPalService from '@services/Payment/PayPalService'
 import { message } from 'antd'
 import { resolveSizeNameForItems } from '../../utils/sizeName'
 
@@ -26,34 +27,178 @@ const Payment = () => {
 
   // Get form data from location state
   const formData = location.state?.formData || {}
-  const paymentMethod = location.state?.paymentMethod || 'cash'
+  const paymentMethodRaw = location.state?.paymentMethod || localStorage.getItem('payment_method') || 'cash'
   const order = location.state?.order || {}
   const buyNow = location.state?.buyNow || false
+
+  // Map payment method to backend format
+  const normalizePaymentMethod = (method) => {
+    const methodLower = String(method).toLowerCase()
+    if (methodLower === 'payos') return 'PAYOS'
+    if (methodLower === 'paypal') return 'PAYPAL'
+    if (methodLower === 'cash' || methodLower === 'cod') return 'COD'
+    return 'COD' // Default to COD
+  }
+
+  const paymentMethod = normalizePaymentMethod(paymentMethodRaw)
+
+  // Log để debug
+  console.log('💳 Payment method:', {
+    raw: paymentMethodRaw,
+    normalized: paymentMethod,
+    fromLocationState: location.state?.paymentMethod,
+    fromLocalStorage: localStorage.getItem('payment_method')
+  })
 
   // const discountValue = order?.total * (voucher?.discount || 0) / 100 || 0;
 
   useEffect(() => {
-    console.log(searchParams);
-    const fetchStatus = async () => {
-      if (code && id && status && orderCode) {
+    const code = searchParams.get('code');
+    const id = searchParams.get('id');
+    const cancel = searchParams.get('cancel');
+    const status = searchParams.get('status');
+    const orderCode = searchParams.get('orderCode');
+    const paymentId = searchParams.get('paymentId');
+    const payerId = searchParams.get('PayerID');
+    const token = searchParams.get('token');
+    const urlOrderId = searchParams.get('orderId');
+
+    console.log('📥 Payment callback params:', { code, id, cancel, status, orderCode, paymentId, payerId, token, urlOrderId });
+
+    const handlePaymentCallback = async () => {
+      // ============================================
+      // PAYPAL CALLBACK HANDLING
+      // ============================================
+      // PayPal redirect về với: status, cancel, paymentId, PayerID, token
+      // URL mẫu: ?orderId=123&status=PAID&cancel=false&paymentId=xxx&token=yyy&PayerID=zzz
+      if (paymentId && payerId) {
+        console.log('💙 Detected PayPal callback - executing payment');
+        console.log('📥 Full URL params:', Object.fromEntries(searchParams.entries()));
         setCheckStatusPayment(true);
-        const response = await PaymentService.getStatusPayos(orderCode);
-        if (response === false) {
+        setIsProcessing(true);
+
+        // Lấy orderId và orderCode từ URL params, localStorage, state, hoặc location.state
+        const savedOrderId = localStorage.getItem('paypal_order_id');
+        const savedOrderCode = localStorage.getItem('paypal_order_code');
+        const currentOrderId = urlOrderId || savedOrderId || orderId || location.state?.orderId;
+        const currentOrderCode = savedOrderCode || orderNumber || location.state?.orderCode;
+
+        console.log('🔍 Looking for orderId and orderCode:', {
+          urlOrderId,
+          savedOrderId,
+          savedOrderCode,
+          orderId,
+          locationState: location.state?.orderId,
+          finalOrderId: currentOrderId,
+          finalOrderCode: currentOrderCode
+        });
+
+        if (!currentOrderId) {
+          console.error('❌ Order ID not found for PayPal execution');
+          message.error('Không tìm thấy mã đơn hàng! Vui lòng thử lại.');
           setIsProcessing(false);
           setIsSuccess(false);
+          return;
         }
+
+        console.log(`💳 Executing PayPal payment: orderId=${currentOrderId}, paymentId=${paymentId}, payerId=${payerId}`);
+
+        // Gọi backend để execute PayPal payment và update database
+        const executeResponse = await PayPalService.executePayment(currentOrderId, paymentId, payerId);
+
+        console.log('📦 Execute response:', executeResponse);
+
+        if (executeResponse && executeResponse.success) {
+          console.log('✅ PayPal payment executed successfully');
+          setIsSuccess(true);
+          setOrderNumber(currentOrderCode || currentOrderId); // Ưu tiên orderCode
+          message.success('Thanh toán PayPal thành công!');
+
+          // Xóa orderId, orderCode và paymentMethod khỏi localStorage sau khi execute thành công
+          localStorage.removeItem('paypal_order_id');
+          localStorage.removeItem('paypal_order_code');
+          localStorage.removeItem('payment_method');
+          console.log('🗑️ Removed orderId, orderCode and paymentMethod from localStorage');
+        } else {
+          console.error('❌ Execute failed:', executeResponse?.message);
+          message.error(executeResponse?.message || 'Thanh toán PayPal thất bại!');
+          setIsSuccess(false);
+        }
+
         setIsProcessing(false);
-        setIsSuccess(true);
+        return;
+      }
+
+      // ============================================
+      // PAYPAL CANCEL/FAILURE HANDLING
+      // ============================================
+      // Backend redirect về khi PayPal cancel: ?status=CANCELLED&cancel=true
+      // Không có paymentId và PayerID
+      if (status && cancel === 'true' && !paymentId && !payerId && !code && !orderCode) {
+        console.log('💙 Detected PayPal cancel callback');
+        setCheckStatusPayment(true);
+        setIsProcessing(false);
+
+        const currentOrderId = urlOrderId || orderId || location.state?.orderId;
+
+        console.log('❌ PayPal payment cancelled by user');
+        setIsSuccess(false);
+        if (currentOrderId) {
+          setOrderNumber(currentOrderId);
+        }
+        message.error('Đơn hàng PayPal đã bị hủy!');
+
+        // Xóa localStorage
+        localStorage.removeItem('paypal_order_id');
+        localStorage.removeItem('paypal_order_code');
+        localStorage.removeItem('payment_method');
+        return;
+      }
+
+      // ============================================
+      // PAYOS CALLBACK HANDLING
+      // ============================================
+      // Kiểm tra nếu có query params từ PayOS
+      if (code && status && orderCode) {
+        console.log('💳 Detected PayOS callback');
+        setCheckStatusPayment(true);
+        setIsProcessing(false);
+
+        // Kiểm tra nếu đơn hàng bị hủy
+        // cancel=true HOẶC status=CANCELLED = đơn hàng đã bị hủy
+        const isCancelled = (cancel === 'true' || status === 'CANCELLED');
+
+        // Kiểm tra thanh toán thành công
+        // code=00 VÀ status=PAID VÀ KHÔNG bị cancel = thành công
+        const isPaymentSuccess = (code === '00' && status === 'PAID' && !isCancelled);
+
+        if (isCancelled) {
+          console.log('❌ Payment cancelled by user');
+          setIsSuccess(false);
+          setOrderNumber(orderCode);
+          message.error('Đơn hàng đã bị hủy!');
+          // Xóa payment_method khỏi localStorage
+          localStorage.removeItem('payment_method');
+        } else if (isPaymentSuccess) {
+          console.log('✅ Payment successful from PayOS');
+          setIsSuccess(true);
+          setOrderNumber(orderCode);
+          message.success('Thanh toán thành công!');
+          // Xóa payment_method khỏi localStorage
+          localStorage.removeItem('payment_method');
+        } else {
+          console.log('⚠️ Payment failed with status:', status);
+          setIsSuccess(false);
+          setOrderNumber(orderCode);
+          message.error(`Thanh toán thất bại! Trạng thái: ${status}`);
+          // Xóa payment_method khỏi localStorage
+          localStorage.removeItem('payment_method');
+        }
       }
     };
 
-    const code = searchParams.get('code');
-    const id = searchParams.get('id');
-    const status = searchParams.get('status');
-    const orderCode = searchParams.get('orderCode');
-
-    fetchStatus();
-  }, [searchParams])
+    handlePaymentCallback();
+  }, [searchParams, orderId, location.state])
 
   useEffect(() => {
     if (voucher) {
@@ -91,80 +236,177 @@ const Payment = () => {
     }).format(price)
   }
 
-  const handleProcessPayment = () => {
+  const handleProcessPayment = async () => {
     setCheckStatusPayment(true)
     setIsProcessing(true)
 
-    // Create order in backend for current user from cart selection
-    OrderService.createOrder()
-      .then(async response => {
-        if (response) {
-          console.log('Order created successfully:', response)
-          setOrderId(response.data.id || response.data.orderId)
-          setOrderNumber(response.data.orderNumber || `ORD-${response.data.id}`)
-          setConfirmOrder(response.data)
+    try {
+      // Get userId and addressId from formData
+      const userId = null // Will use authenticated user from OrderService
+      const userAddressId = formData?.addressId || null
 
-          // Apply voucher to order if selected
-          if (voucher?.id) {
-            try {
-              await OrderService.applyVoucher(response.data.id, voucher.id)
-            } catch (e) {
-              console.warn('Không áp dụng được voucher:', e)
-              message.warning('Không áp dụng được voucher. Vui lòng kiểm tra lại mã giảm giá.')
-            }
-          }
+      console.log('🚀 Starting payment process:', {
+        userId,
+        userAddressId,
+        hasVoucher: !!voucher,
+        voucherId: voucher?.id,
+        paymentMethod
+      })
 
-          // fetch order details for display
-          try {
-            const orderRes = await OrderService.getOrderById(response.data.id)
-            setConfirmOrder(orderRes.data)
-            const rawItems = orderRes.data.orderItems || orderRes.data.orderDetails || []
-            const enriched = await resolveSizeNameForItems(rawItems)
-            setConfirmItems(enriched)
-          } catch (e) {
-            console.warn('Could not fetch order details', e)
-          }
-          if (paymentMethod.toUpperCase() === 'PAYOS') {
-            const payosRes = await PaymentService.createPaymentPayos({
-              orderId: response.data.orderId,
-            })
-            if (payosRes && payosRes.data.paymentLinkId && payosRes.data.checkoutUrl && payosRes.data.expiredAt) {
-              window.location.href = payosRes.data.checkoutUrl;
-              return;
-            } else {
-              setIsProcessing(false);
-              setIsSuccess(false);
-              message.error('Không tạo được link thanh toán PayOS!');
-              return;
-            }
-          }
-          if (!buyNow) {
-            for (const item of order.items) {
-              try {
-                await CartService.deleteCartItem(item.cartItemId || item.id)
-              } catch (err) {
-                console.error('Error deleting cart item:', err)
-              }
-            }
-          }
-          setOrderNumber(response.data.orderNumber)
-          setIsProcessing(false)
-          setIsSuccess(true)
-          // setTimeout(() => {
-          //   navigate('/don-hang')
-          // }, 2000)
-        } else {
-          setIsProcessing(false)
-          setIsSuccess(false)
-          message.error('Payment failed. Please try again.')
+      // Step 1: Create order with or without address
+      console.log('📦 Step 1: Creating order...')
+      const createOrderResponse = await OrderService.createOrder(userId, userAddressId)
+
+      if (!createOrderResponse || !createOrderResponse.success) {
+        throw new Error('Failed to create order')
+      }
+
+      const createdOrderId = createOrderResponse.data.id || createOrderResponse.data.orderId
+      console.log('✅ Order created with ID:', createdOrderId)
+
+      setOrderId(createdOrderId)
+      setOrderNumber(createOrderResponse.data.orderCode || `ORD-${createdOrderId}`)
+      setConfirmOrder(createOrderResponse.data)
+
+      // Step 2: Apply voucher if selected
+      if (voucher?.id) {
+        try {
+          console.log('🎟️ Step 2: Applying voucher...')
+          await OrderService.applyVoucher(createdOrderId, voucher.id)
+          message.success('Áp dụng mã giảm giá thành công!')
+        } catch (voucherError) {
+          console.warn('⚠️ Could not apply voucher:', voucherError)
+          message.warning('Không áp dụng được mã giảm giá.')
         }
-      })
-      .catch(error => {
-        console.error('Error processing payment:', error)
-        setIsProcessing(false)
-        setIsSuccess(false)
-        alert('Payment failed. Please try again.')
-      })
+      }
+
+      // Step 3: Fetch order details for display
+      try {
+        console.log('📋 Step 3: Fetching order details...')
+        const orderDetailsResponse = await OrderService.getOrderById(createdOrderId)
+        if (orderDetailsResponse && orderDetailsResponse.success) {
+          setConfirmOrder(orderDetailsResponse.data)
+          const rawItems = orderDetailsResponse.data.orderItems || orderDetailsResponse.data.orderDetails || []
+          const enriched = await resolveSizeNameForItems(rawItems)
+          setConfirmItems(enriched)
+        }
+      } catch (detailsError) {
+        console.warn('⚠️ Could not fetch order details:', detailsError)
+      }
+
+      // Step 4: Handle payment method specific logic
+      console.log(`💳 Step 4: Processing payment with method: ${paymentMethod}`)
+
+      if (paymentMethod === 'PAYPAL') {
+        // For PayPal, create payment and redirect to approval URL
+        console.log('💳 Creating PayPal payment...')
+
+        // Lưu orderId, orderCode và paymentMethod vào localStorage để sử dụng khi PayPal redirect về
+        const currentOrderCode = createOrderResponse.data.orderCode || `ORD-${createdOrderId}`
+        setOrderId(createdOrderId)
+        localStorage.setItem('paypal_order_id', createdOrderId.toString())
+        localStorage.setItem('paypal_order_code', currentOrderCode)
+        localStorage.setItem('payment_method', 'PAYPAL')
+        console.log('💾 Saved to localStorage:', { orderId: createdOrderId, orderCode: currentOrderCode, paymentMethod: 'PAYPAL' })
+
+        const paypalResponse = await PayPalService.createPayment(createdOrderId)
+
+        if (!paypalResponse || !paypalResponse.success) {
+          throw new Error('Failed to create PayPal payment')
+        }
+
+        console.log('✅ PayPal payment created:', paypalResponse.data)
+
+        // Extract approval URL from response
+        let approvalUrl = null
+
+        if (typeof paypalResponse.data === 'string') {
+          approvalUrl = paypalResponse.data
+        } else if (paypalResponse.data && typeof paypalResponse.data === 'object') {
+          approvalUrl = paypalResponse.data.approvalUrl ||
+                       paypalResponse.data.approval_url ||
+                       paypalResponse.data.checkoutUrl ||
+                       paypalResponse.data.url
+        }
+
+        if (approvalUrl && typeof approvalUrl === 'string' && approvalUrl.trim()) {
+          console.log('🔗 Redirecting to PayPal approval page:', approvalUrl)
+          console.log('📝 Order ID saved for callback:', createdOrderId)
+          message.success('Đang chuyển đến trang thanh toán PayPal...')
+          setTimeout(() => {
+            window.location.href = approvalUrl
+          }, 1000)
+          return
+        } else {
+          console.error('❌ PayPal response data:', paypalResponse.data)
+          throw new Error('PayPal approval URL not found in response')
+        }
+      } else if (paymentMethod === 'PAYOS') {
+        // For PAYOS, create payment link and redirect
+        console.log('💳 Creating PayOS payment link...')
+
+        // Lưu paymentMethod vào localStorage để sử dụng khi PayOS redirect về
+        localStorage.setItem('payment_method', 'PAYOS')
+        console.log('💾 Saved paymentMethod to localStorage: PAYOS')
+
+        const paymentResponse = await PaymentService.createPaymentLink(
+          createdOrderId,
+          paymentMethod
+        )
+
+        if (!paymentResponse || !paymentResponse.success) {
+          throw new Error('Failed to create payment link')
+        }
+
+        console.log('✅ Payment link created:', paymentResponse.data)
+
+        // Extract checkout URL from response
+        let checkoutUrl = null
+
+        if (typeof paymentResponse.data === 'string') {
+          checkoutUrl = paymentResponse.data
+        } else if (paymentResponse.data && typeof paymentResponse.data === 'object') {
+          checkoutUrl = paymentResponse.data.checkoutUrl ||
+                       paymentResponse.data.paymentUrl ||
+                       paymentResponse.data.url ||
+                       paymentResponse.data.link
+        }
+
+        if (checkoutUrl && typeof checkoutUrl === 'string' && checkoutUrl.trim()) {
+          console.log('🔗 Redirecting to PayOS checkout:', checkoutUrl)
+          message.success('Đang chuyển đến trang thanh toán PayOS...')
+          setTimeout(() => {
+            window.location.href = checkoutUrl
+          }, 1000)
+          return
+        } else {
+          console.error('❌ Payment response data:', paymentResponse.data)
+          throw new Error('Payment URL not found in response')
+        }
+      } else if (paymentMethod === 'COD') {
+        // For COD, just show success
+        console.log('✅ COD payment confirmed')
+      }
+
+      // For COD, delete cart items and show success
+      if (!buyNow) {
+        for (const item of order.items) {
+          try {
+            await CartService.deleteCartItem(item.cartItemId || item.id)
+          } catch (err) {
+            console.error('Error deleting cart item:', err)
+          }
+        }
+      }
+
+      setIsProcessing(false)
+      setIsSuccess(true)
+    } catch (error) {
+      console.error('Error processing payment:', error)
+      setIsProcessing(false)
+      setIsSuccess(false)
+      message.error(error.message || 'Payment failed. Please try again.')
+    }
   }
 
   const handleApplyVoucher = async voucherObj => {

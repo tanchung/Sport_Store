@@ -1,38 +1,112 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FaArrowRight } from 'react-icons/fa6'
-import { FaCreditCard, FaMoneyBillWave, FaCashRegister } from 'react-icons/fa'
+import { FaCreditCard, FaMoneyBillWave, FaCashRegister, FaPaypal } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { message } from 'antd'
+import { useAuth } from '@/context/AuthContext'
+import AddressService from '@services/Address/AddressService'
+import AddressSelector from './Components/AddressSelector'
+import AddressForm from './Components/AddressForm'
 
 const Checkout = () => {
   const navigate = useNavigate()
-  const [onPayOS, setOnPayOS] = useState(true)
-  const [formData, setFormData] = useState({
-    state: '',
-    city: '',
-    zipCode: '',
-  })
+  const { currentUser } = useAuth()
+  const [paymentMethod, setPaymentMethod] = useState('payos') // 'payos', 'paypal', 'cash'
+  const [addresses, setAddresses] = useState([])
+  const [selectedAddress, setSelectedAddress] = useState(null)
+  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [loadingAddresses, setLoadingAddresses] = useState(true)
+  const [submittingAddress, setSubmittingAddress] = useState(false)
   const location = useLocation()
   const order = location.state?.order || {}
   const buyNow = location.state?.buyNow || false
 
+  // Get userId from currentUser
+  const getUserId = () => {
+    return currentUser?.data?.id ||
+           currentUser?.data?.userId ||
+           currentUser?.id ||
+           currentUser?.userId
+  }
+
+  // Fetch addresses on component mount
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      const userId = getUserId()
+      if (!userId) {
+        message.error('Không thể xác định người dùng')
+        setLoadingAddresses(false)
+        return
+      }
+
+      try {
+        setLoadingAddresses(true)
+        const response = await AddressService.getAddressesByUserId(userId)
+        if (response.success) {
+          setAddresses(response.data)
+          // Auto-select first address if available
+          if (response.data.length > 0) {
+            setSelectedAddress(response.data[0])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching addresses:', error)
+        message.error('Không thể tải danh sách địa chỉ')
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    fetchAddresses()
+  }, [currentUser])
+
   const handleCheckout = () => {
+    if (!selectedAddress) {
+      message.error('Vui lòng chọn địa chỉ giao hàng')
+      return
+    }
+
     navigate('/xac-nhan-thanh-toan', {
       state: {
         order: order,
-        formData,
-        paymentMethod: onPayOS ? 'payos' : 'cash',
+        formData: {
+          addressLine: selectedAddress.addressLine,
+          wardCommune: selectedAddress.wardCommune,
+          state: selectedAddress.state,
+          postalCode: selectedAddress.postalCode,
+          country: selectedAddress.country,
+          addressId: selectedAddress.id
+        },
+        paymentMethod: paymentMethod, // 'payos', 'paypal', or 'cash'
         buyNow: buyNow,
       },
     })
   }
 
-  const handleInputChange = e => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }))
+  const handleAddressSubmit = async (addressData) => {
+    try {
+      setSubmittingAddress(true)
+      const response = await AddressService.createAddress(addressData)
+
+      if (response.success) {
+        message.success('Thêm địa chỉ thành công')
+        // Refresh addresses list
+        const userId = getUserId()
+        const addressesResponse = await AddressService.getAddressesByUserId(userId)
+        if (addressesResponse.success) {
+          setAddresses(addressesResponse.data)
+          // Auto-select the newly created address
+          setSelectedAddress(response.data)
+        }
+        setShowAddressForm(false)
+      }
+    } catch (error) {
+      console.error('Error creating address:', error)
+      message.error(error?.response?.data?.message || 'Không thể thêm địa chỉ')
+    } finally {
+      setSubmittingAddress(false)
+    }
   }
 
   return (
@@ -127,55 +201,30 @@ const Checkout = () => {
           transition={{ delay: 0.2 }}
           className='rounded-xl bg-white shadow-lg md:p-8'
         >
-          {/* Billing Information */}
+          {/* Address Section */}
           <h2 className='mb-4 text-2xl font-semibold text-gray-800'>
-            Thông tin thanh toán
+            Thông tin giao hàng
           </h2>
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-            <div className='space-y-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700'>
-                  Tỉnh/Thành phố
-                </label>
-                <input
-                  type='text'
-                  name='city'
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className='w-full rounded-lg border border-gray-300 px-4 py-2 transition focus:border-transparent focus:ring-1 focus:outline-none'
-                />
-              </div>
+
+          {loadingAddresses ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             </div>
-            <div className='space-y-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700'>
-                  Địa chỉ
-                </label>
-                <input
-                  type='text'
-                  name='state'
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className='w-full rounded-lg border border-gray-300 px-4 py-2 transition focus:border-transparent focus:ring-1 focus:outline-none'
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className='mt-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700'>
-                Mã bưu chính
-              </label>
-              <input
-                type='text'
-                name='zipCode'
-                value={formData.zipCode}
-                onChange={handleInputChange}
-                className='w-full rounded-lg border border-gray-300 px-4 py-2 transition focus:border-transparent focus:ring-1 focus:outline-none'
-              />
-            </div>
-          </div>
+          ) : showAddressForm ? (
+            <AddressForm
+              userId={getUserId()}
+              onSubmit={handleAddressSubmit}
+              onCancel={() => setShowAddressForm(false)}
+              isSubmitting={submittingAddress}
+            />
+          ) : (
+            <AddressSelector
+              addresses={addresses}
+              selectedAddress={selectedAddress}
+              onSelectAddress={setSelectedAddress}
+              onAddNew={() => setShowAddressForm(true)}
+            />
+          )}
 
           {/* Payment Method */}
           <div className='mt-6'>
@@ -183,35 +232,55 @@ const Checkout = () => {
               Phương thức thanh toán
             </h2>
             <div className='space-y-4'>
+              {/* PayOS Option */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${
-                  onPayOS
+                  paymentMethod === 'payos'
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-blue-300'
                 }`}
-                onClick={() => setOnPayOS(true)}
+                onClick={() => setPaymentMethod('payos')}
               >
                 <div className='flex items-center space-x-3'>
                   <FaCreditCard
-                    className={`text-xl ${onPayOS ? 'text-blue-500' : 'text-gray-400'}`}
+                    className={`text-xl ${paymentMethod === 'payos' ? 'text-blue-500' : 'text-gray-400'}`}
                   />
                   <span className='font-medium'>PayOS</span>
                 </div>
               </motion.div>
 
+              {/* PayPal Option */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${
-                  !onPayOS
+                  paymentMethod === 'paypal'
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-blue-300'
                 }`}
-                onClick={() => setOnPayOS(false)}
+                onClick={() => setPaymentMethod('paypal')}
+              >
+                <div className='flex items-center space-x-3'>
+                  <FaPaypal
+                    className={`text-xl ${paymentMethod === 'paypal' ? 'text-blue-500' : 'text-gray-400'}`}
+                  />
+                  <span className='font-medium'>PayPal</span>
+                </div>
+              </motion.div>
+
+              {/* COD Option */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${
+                  paymentMethod === 'cash'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+                onClick={() => setPaymentMethod('cash')}
               >
                 <div className='flex items-center space-x-3'>
                   <FaMoneyBillWave
-                    className={`text-xl ${!onPayOS ? 'text-blue-500' : 'text-gray-400'}`}
+                    className={`text-xl ${paymentMethod === 'cash' ? 'text-blue-500' : 'text-gray-400'}`}
                   />
                   <span className='font-medium'>Thanh toán khi nhận hàng</span>
                 </div>
@@ -221,10 +290,15 @@ const Checkout = () => {
 
           {/* Checkout Button */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={selectedAddress && !showAddressForm ? { scale: 1.02 } : {}}
+            whileTap={selectedAddress && !showAddressForm ? { scale: 0.98 } : {}}
             onClick={handleCheckout}
-            className='mt-4 flex w-full items-center justify-center space-x-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-blue-500'
+            disabled={!selectedAddress || showAddressForm || loadingAddresses}
+            className={`mt-4 flex w-full items-center justify-center space-x-2 rounded-lg py-3 font-semibold text-white shadow-lg transition-all duration-300 ${
+              !selectedAddress || showAddressForm || loadingAddresses
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'
+            }`}
           >
             <span>Hoàn tất thanh toán</span>
             <FaArrowRight />

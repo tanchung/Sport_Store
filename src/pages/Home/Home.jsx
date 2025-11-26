@@ -9,25 +9,25 @@ import { Helmet } from 'react-helmet-async'
 // Fallback banner images in case API fails
 const fallbackBanners = [
   {
-    id: 'fallback-1',
+    id: '1',
     name: 'Banner 1',
     imageUrl: 'https://theme.hstatic.net/200000278317/1001381785/14/slideshow_7.webp?v=112',
     alt: 'image1',
   },
   {
-    id: 'fallback-2',
+    id: '2',
     name: 'Banner 2',
     imageUrl: 'https://cdn.hstatic.net/themes/200000278317/1001392934/14/slideshow_4.webp?v=23',
     alt: 'image2',
   },
   {
-    id: 'fallback-3',
+    id: '3',
     name: 'Banner 3',
     imageUrl: 'https://theme.hstatic.net/200000278317/1001381785/14/slideshow_2.webp?v=112',
     alt: 'image3',
   },
   {
-    id: 'fallback-4',
+    id: '4',
     name: 'Banner 4',
     imageUrl: 'https://theme.hstatic.net/200000278317/1001381785/14/slideshow_6.webp?v=112',
     alt: 'image4',
@@ -209,21 +209,19 @@ const Home = () => {
         setBannersLoading(true)
         setError(null)
 
-        // Fetch both products and collections simultaneously
+        // Fetch top 10 new products and collections simultaneously
         const [productsResponse, collectionsResponse] = await Promise.all([
-          ProductService.getProducts({
-            pageNumber: 1,
-            pageSize: 10,
-            sortBy: 'ProductName',
-            sortAscending: true,
-          }),
+          ProductService.getTop10NewProducts(),
           CategoryService.getAllCollections().catch(err => {
             console.warn('Failed to fetch collections, using fallback banners:', err)
             return { success: false, data: fallbackBanners }
           })
         ])
 
-        setProducts(productsResponse.products)
+        // Set top 10 newest products
+        if (productsResponse.success && productsResponse.products) {
+          setProducts(productsResponse.products)
+        }
 
         // Use dynamic banners from API or fallback to static ones
         if (collectionsResponse.success && collectionsResponse.data.length > 0) {

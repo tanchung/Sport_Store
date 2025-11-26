@@ -36,12 +36,20 @@ const Products = () => {
     fetchProducts,
     updateFilters,
     changePage,
-    changePageSize,
+    changePageSize, // Sử dụng hàm này để set mặc định
     fetchCategories,
     categories,
   } = useProductStore()
 
   const location = useLocation()
+
+  // --- THAY ĐỔI 1: Set mặc định pageSize là 12 khi vào trang ---
+  useEffect(() => {
+    changePageSize(12) // Bắt buộc lấy 12 sản phẩm mỗi trang
+    fetchCategories()
+    fetchProducts()
+  }, [])
+  // -----------------------------------------------------------
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -50,14 +58,6 @@ const Products = () => {
       updateFilters({ brand: qpBrand })
     }
   }, [location.search])
-
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  useEffect(() => {
-    fetchProducts()
-  }, [])
 
   // Debug pagination changes
   useEffect(() => {
@@ -125,6 +125,7 @@ const Products = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Hàm này giờ ít dùng trực tiếp vì đã bỏ dropdown, nhưng vẫn giữ để logic không lỗi
   const handlePageSizeChange = pageSize => {
     changePageSize(pageSize)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -213,6 +214,15 @@ const Products = () => {
   if (loading && !products.length) return <LoadingState />
   if (error) return <ErrorState error={error} onRetry={fetchProducts} />
 
+  // --- Logic tính toán hiển thị (Sử dụng pageSize mặc định 12) ---
+  const displayPage = pagination.currentPage === 0 ? 1 : pagination.currentPage;
+  const displayPageSize = pagination.pageSize || 12; // Mặc định hiển thị logic là 12
+  
+  const startItem = (displayPage - 1) * displayPageSize + 1;
+  const effectiveTotalItems = pagination.totalItems > 0 ? pagination.totalItems : (products.length > 0 ? products.length : 0);
+  const endItem = Math.min(displayPage * displayPageSize, effectiveTotalItems);
+  // ---------------------------------------------------------------
+
   return (
     <div className='min-h-screen bg-gray-50'>
       <div className='container mx-auto px-4 py-8'>
@@ -281,10 +291,11 @@ const Products = () => {
         )}
 
         <div className='flex flex-col lg:flex-row'>
-          {/* Sidebar - Hidden on mobile unless toggled */}
+          {/* Sidebar */}
           <div
             className={`lg:block lg:w-1/4 lg:pr-8 ${showMobileFilters ? 'block' : 'hidden'} lg:sticky lg:top-4 lg:self-start`}
           >
+            {/* ... (Giữ nguyên phần Sidebar Filters) ... */}
             <div className='mb-6 rounded-lg bg-white p-5 shadow-sm'>
               <div className='mb-4 flex items-center justify-between lg:hidden'>
                 <h3 className='text-lg font-medium'>Bộ lọc</h3>
@@ -293,7 +304,7 @@ const Products = () => {
                 </button>
               </div>
 
-              {/* Search Box - Hidden on mobile */}
+              {/* Search Box */}
               <div className='mb-6 hidden md:block'>
                 <form onSubmit={handleSearchSubmit} className='relative'>
                   <input
@@ -321,14 +332,12 @@ const Products = () => {
                 </form>
               </div>
 
-              {/* Categories Dropdown */}
+              {/* Categories */}
               <div className='mb-6'>
                 <div className='relative'>
                   <button
                     className='flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                    onClick={() =>
-                      setShowCategoryDropdown(!showCategoryDropdown)
-                    }
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                   >
                     <span>Danh mục: {selectedCategory.value}</span>
                     <ChevronDown
@@ -360,7 +369,7 @@ const Products = () => {
                 </div>
               </div>
 
-              {/* Price Filter Section */}
+              {/* Price Filter */}
               <div className='mb-6'>
                 <div className='flex items-center justify-between mb-3'>
                   <h3 className='text-lg font-medium'>GIÁ</h3>
@@ -380,26 +389,13 @@ const Products = () => {
                     onChange={(e) => {
                       const value = e.target.value;
                       switch (value) {
-                        case 'all':
-                          updateFilters({ priceMin: '', priceMax: '' });
-                          break;
-                        case 'under-1m':
-                          updateFilters({ priceMin: 0, priceMax: 1000000 });
-                          break;
-                        case '1m-2m':
-                          updateFilters({ priceMin: 1000000, priceMax: 2000000 });
-                          break;
-                        case '2m-3m':
-                          updateFilters({ priceMin: 2000000, priceMax: 3000000 });
-                          break;
-                        case '3m-4m':
-                          updateFilters({ priceMin: 3000000, priceMax: 4000000 });
-                          break;
-                        case 'over-4m':
-                          updateFilters({ priceMin: 4000000, priceMax: null });
-                          break;
-                        default:
-                          updateFilters({ priceMin: '', priceMax: '' });
+                        case 'all': updateFilters({ priceMin: '', priceMax: '' }); break;
+                        case 'under-1m': updateFilters({ priceMin: 0, priceMax: 1000000 }); break;
+                        case '1m-2m': updateFilters({ priceMin: 1000000, priceMax: 2000000 }); break;
+                        case '2m-3m': updateFilters({ priceMin: 2000000, priceMax: 3000000 }); break;
+                        case '3m-4m': updateFilters({ priceMin: 3000000, priceMax: 4000000 }); break;
+                        case 'over-4m': updateFilters({ priceMin: 4000000, priceMax: null }); break;
+                        default: updateFilters({ priceMin: '', priceMax: '' });
                       }
                     }}
                     className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
@@ -422,7 +418,7 @@ const Products = () => {
                 )}
               </div>
 
-              {/* Brand Filter Section */}
+              {/* Brand Filter */}
               <div className='mb-6'>
                 <div className='flex items-center justify-between mb-3'>
                   <h3 className='text-lg font-medium'>THƯƠNG HIỆU</h3>
@@ -457,7 +453,7 @@ const Products = () => {
                 )}
               </div>
 
-              {/* Sort Options Dropdown */}
+              {/* Sort Options */}
               <div className='mb-6'>
                 <div className='relative'>
                   <button
@@ -467,8 +463,7 @@ const Products = () => {
                     <span>
                       {filters.sortBy === 'priceActive' && filters.sortAscending
                         ? 'Sắp xếp: Giá thấp đến cao'
-                        : filters.sortBy === 'priceActive' &&
-                            !filters.sortAscending
+                        : filters.sortBy === 'priceActive' && !filters.sortAscending
                           ? 'Sắp xếp: Giá cao đến thấp'
                           : 'Sắp xếp: Mặc định'}
                     </span>
@@ -477,7 +472,6 @@ const Products = () => {
                       className={`transition-transform ${showSortDropdown ? 'rotate-180 transform' : ''}`}
                     />
                   </button>
-
                   {showSortDropdown && (
                     <div className='absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg'>
                       {[
@@ -489,29 +483,17 @@ const Products = () => {
                           key={option.value}
                           onClick={() => handleSortChange(option.value)}
                           className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm ${
-                            (option.value === 'price-low-high' &&
-                              filters.sortBy === 'priceActive' &&
-                              filters.sortAscending) ||
-                            (option.value === 'price-high-low' &&
-                              filters.sortBy === 'priceActive' &&
-                              !filters.sortAscending) ||
-                            (option.value === 'default' &&
-                              filters.sortBy === 'ProductName')
+                            (option.value === 'price-low-high' && filters.sortBy === 'priceActive' && filters.sortAscending) ||
+                            (option.value === 'price-high-low' && filters.sortBy === 'priceActive' && !filters.sortAscending) ||
+                            (option.value === 'default' && filters.sortBy === 'ProductName')
                               ? 'bg-blue-50 font-medium text-blue-700'
                               : 'text-gray-700 hover:bg-gray-50'
                           }`}
                         >
                           <span>{option.label}</span>
-                          {(option.value === 'price-low-high' &&
-                            filters.sortBy === 'priceActive' &&
-                            filters.sortAscending) ||
-                            (option.value === 'price-high-low' &&
-                              filters.sortBy === 'priceActive' &&
-                              !filters.sortAscending) ||
-                            (option.value === 'default' &&
-                              filters.sortBy === 'ProductName' && (
-                                <Check size={16} />
-                              ))}
+                          {(option.value === 'price-low-high' && filters.sortBy === 'priceActive' && filters.sortAscending) ||
+                            (option.value === 'price-high-low' && filters.sortBy === 'priceActive' && !filters.sortAscending) ||
+                            (option.value === 'default' && filters.sortBy === 'ProductName' && <Check size={16} />)}
                         </button>
                       ))}
                     </div>
@@ -525,27 +507,17 @@ const Products = () => {
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between rounded-md bg-gradient-to-r from-red-50 to-pink-50 px-3 py-2'>
                     <div className='flex items-center'>
-                      <span className='mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white'>
-                        %
-                      </span>
-                      <span className='text-sm text-gray-700'>
-                        Đang giảm giá
-                      </span>
+                      <span className='mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white'>%</span>
+                      <span className='text-sm text-gray-700'>Đang giảm giá</span>
                     </div>
-                    <span className='text-sm font-medium text-red-600'>
-                      {products.filter(p => p.discountPercentage > 0).length}
-                    </span>
+                    <span className='text-sm font-medium text-red-600'>{products.filter(p => p.discountPercentage > 0).length}</span>
                   </div>
                   <div className='flex items-center justify-between rounded-md bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2'>
                     <div className='flex items-center'>
                       <Star size={16} className='mr-2 text-yellow-500' />
-                      <span className='mt-[0.5px] text-sm text-gray-700'>
-                        Đánh giá 4.5+
-                      </span>
+                      <span className='mt-[0.5px] text-sm text-gray-700'>Đánh giá 4.5+</span>
                     </div>
-                    <span className='text-sm font-medium text-blue-600'>
-                      {products.filter(p => p.rating >= 4.5).length}
-                    </span>
+                    <span className='text-sm font-medium text-blue-600'>{products.filter(p => p.rating >= 4.5).length}</span>
                   </div>
                 </div>
               </div>
@@ -559,17 +531,12 @@ const Products = () => {
               <div className='text-sm text-gray-600'>
                 <span>Hiển thị </span>
                 <span className='font-medium'>
-                  {pagination.totalItems === 0
-                    ? 0
-                    : (pagination.currentPage - 1) * pagination.pageSize + 1}
-                  -
-                  {Math.min(
-                    pagination.currentPage * pagination.pageSize,
-                    pagination.totalItems
-                  )}
+                  {products.length === 0 ? '0' : startItem}
+                  {' - '}
+                  {endItem}
                 </span>
                 <span> trên </span>
-                <span className='font-medium'>{pagination.totalItems}</span>
+                <span className='font-medium'>{effectiveTotalItems}</span>
                 <span> sản phẩm</span>
               </div>
             </div>
@@ -605,7 +572,7 @@ const Products = () => {
                     ))}
                   </div>
 
-                  {/* Loading overlay for products grid */}
+                  {/* Loading overlay */}
                   {loading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
                       <div className="flex flex-col items-center space-y-2">
@@ -616,9 +583,8 @@ const Products = () => {
                   )}
                 </div>
 
-                {/* Pagination */}
+                {/* --- THAY ĐỔI 3: Giữ Pagination nhưng BỎ dropdown chọn số lượng --- */}
                 <div className='mt-8 relative'>
-                  {/* Loading overlay during pagination */}
                   {loading && (
                     <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
                       <div className="flex items-center space-x-2">
@@ -629,35 +595,22 @@ const Products = () => {
                   )}
 
                   <div className={`${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {/* Component phân trang (1, 2, 3...) vẫn được giữ lại */}
                     <Pagination
-                      currentPage={pagination.currentPage}
+                      currentPage={displayPage}
                       totalPages={pagination.totalPages}
                       onPageChange={handlePageChange}
-                      itemsPerPage={pagination.pageSize}
-                      totalItems={pagination.totalItems}
+                      itemsPerPage={displayPageSize}
+                      totalItems={effectiveTotalItems}
                       hasPrevious={pagination.hasPrevious}
                       hasNext={pagination.hasNext}
                       loading={loading}
                     />
 
-                    {/* Page size selector */}
-                    <div className='mt-4 flex items-center justify-center md:justify-start'>
-                      <span className='mr-2 text-sm text-gray-700'>Hiển thị:</span>
-                      <select
-                        value={pagination.pageSize}
-                        onChange={e => handlePageSizeChange(Number(e.target.value))}
-                        disabled={loading}
-                        className='rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
-                      >
-                        {[12, 24, 36, 48].map(size => (
-                          <option key={size} value={size}>
-                            {size} sản phẩm
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* ĐÃ XÓA đoạn code hiển thị <select> ở đây */}
                   </div>
                 </div>
+                {/* ------------------------------------------------------------- */}
               </>
             )}
           </div>

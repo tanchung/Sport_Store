@@ -435,19 +435,42 @@ class OrderService {
 
   /**
  * Create a new order from current user's selected cart items
- * Backend: POST /orders/create/{userId}
+ * Backend: POST /orders/create/{userId} or POST /orders/create/{userId}/{userAddressId}
+ * @param {number} userId - Optional user ID (will use authenticated user if not provided)
+ * @param {number} userAddressId - Optional address ID for the order
  */
-  async createOrder() {
+  async createOrder(userId = null, userAddressId = null) {
     try {
       const headers = { 'Content-Type': 'application/json' };
-      const user = await AuthService.info();
-      const userId = user?.data?.id || user?.data?.userId;
-      if (!userId) throw new Error('Không xác định được người dùng để tạo đơn hàng');
-      const response = await api.post(`/orders/create/${userId}`, {}, headers);
+
+      // Get userId from parameter or authenticated user
+      let finalUserId = userId;
+      if (!finalUserId) {
+        const user = await AuthService.info();
+        finalUserId = user?.data?.id || user?.data?.userId;
+      }
+
+      if (!finalUserId) {
+        throw new Error('Không xác định được người dùng để tạo đơn hàng');
+      }
+
+      // Build endpoint based on whether userAddressId is provided
+      let endpoint;
+      if (userAddressId) {
+        endpoint = `/orders/create/${finalUserId}/${userAddressId}`;
+        console.log(`📦 Creating order with address: userId=${finalUserId}, addressId=${userAddressId}`);
+      } else {
+        endpoint = `/orders/create/${finalUserId}`;
+        console.log(`📦 Creating order without address: userId=${finalUserId}`);
+      }
+
+      const response = await api.post(endpoint, {}, headers);
 
       if (response.data.code !== 200) {
         throw new Error(response.data.message || 'Failed to create order');
       }
+
+      console.log('✅ Order created successfully:', response.data.result);
 
       return {
         success: true,
@@ -456,7 +479,7 @@ class OrderService {
         data: response.data.result
       };
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('❌ Error creating order:', error);
       throw error;
     }
   }

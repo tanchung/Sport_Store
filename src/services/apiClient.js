@@ -15,30 +15,11 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
     (config) => {
-        // Initialize headers if not present
-        if (!config.headers) {
-            config.headers = {};
-        }
-        
         if (config.auth !== false) {
-            // Authenticated request - add token
             const token = CookieService.getAccessToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
-                console.log('[API Client] Authenticated request to:', config.url);
             }
-        } else {
-            // Public request - explicitly remove Authorization header
-            console.log('[API Client] Public request to:', config.url, '- Removing auth headers');
-            console.log('[API Client] Headers before cleanup:', {...config.headers});
-            if (config.headers.Authorization) {
-                delete config.headers.Authorization;
-            }
-            if (config.headers.authorization) {
-                delete config.headers.authorization;
-            }
-            console.log('[API Client] Headers after cleanup:', {...config.headers});
-            console.log('[API Client] Final request URL:', config.baseURL + config.url);
         }
         return config;
     },
@@ -97,7 +78,9 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } catch (refreshErr) {
           isRefreshing = false;
-          try { await AuthService.logout(); } catch (e) {}
+          AuthService.logout().catch(() => {
+            // Ignore logout errors during cleanup
+          });
           return Promise.reject(refreshErr);
         }
       }
@@ -107,55 +90,28 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Kiểm tra xem có token hợp lệ không trước khi gọi API
-const validateToken = () => {
-    if (!CookieService.hasAuthTokens()) {
-        console.warn('No authentication tokens found. User may need to log in.');
-        return false;
-    }
-    return true;
-};
-
 const api = {
     get: (url, params = {}, headers = {}) => {
-        if (!validateToken()) {
-            return Promise.reject(new Error('Authentication required. Please log in.'));
-        }
         return apiClient.get(url, { params, headers });
     },
 
     post: (url, data = {}, headers = {}) => {
-        if (!validateToken()) {
-            return Promise.reject(new Error('Authentication required. Please log in.'));
-        }
         return apiClient.post(url, data, { headers });
     },
 
     put: (url, data = {}, headers = {}) => {
-        if (!validateToken()) {
-            return Promise.reject(new Error('Authentication required. Please log in.'));
-        }
         return apiClient.put(url, data, { headers });
     },
 
     patch: (url, data = {}, headers = {}) => {
-        if (!validateToken()) {
-            return Promise.reject(new Error('Authentication required. Please log in.'));
-        }
         return apiClient.patch(url, data, { headers });
     },
 
     delete: (url, headers = {}) => {
-        if (!validateToken()) {
-            return Promise.reject(new Error('Authentication required. Please log in.'));
-        }
         return apiClient.delete(url, { headers });
     },
 
     jsonPatch: (url, operations = [], headers = {}) => {
-        if (!validateToken()) {
-            return Promise.reject(new Error('Authentication required. Please log in.'));
-        }
         return apiClient.patch(url, operations, {
             headers: {
                 ...headers,
@@ -166,6 +122,8 @@ const api = {
 
     public: {
         get: (url, params = {}, headers = {}) => {
+            console.log('[API Client Public GET] URL:', url);
+            console.log('[API Client Public GET] Params:', params);
             return apiClient.get(url, {
                 params,
                 headers,

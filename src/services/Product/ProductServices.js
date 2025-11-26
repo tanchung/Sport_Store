@@ -132,8 +132,8 @@ class ProductService {
             const sortInfo = this.getSortInfo(queryParams.sortBy, queryParams.sortAscending);
 
             const queryParamsForAPI = {
-                pageNumber: ((queryParams.pageNumber || 1) - 1).toString(), // Convert to 0-based string
-                pageSize: (queryParams.pageSize || 10 ).toString(),
+                pageNumber: (queryParams.pageNumber !== undefined ? queryParams.pageNumber : 0).toString(), // Already 0-based from Store
+                pageSize: (queryParams.pageSize || 12).toString(),
                 properties: sortInfo.field || 'name',
                 sortDir: sortInfo.direction || 'asc',
                 category: queryParams.category || queryParams.categoryId || '',
@@ -173,8 +173,14 @@ class ProductService {
             let paginationInfo = {};
 
             // Handle different response structures
-            if (response.data.result.content) {
-                // Old structure with content array
+            // PRIORITY 1: Check for new structure with page object first
+            if (response.data.result.page) {
+                // New structure: { content: [], page: {} }
+                products = response.data.result.content || response.data.result.products || response.data.result.data || [];
+                paginationInfo = response.data.result.page;
+                console.log('📦 Using NEW structure with page object');
+            } else if (response.data.result.content && !response.data.result.page) {
+                // Old structure: { content: [], size: X, number: Y, ... } (flat)
                 products = response.data.result.content;
                 paginationInfo = {
                     size: response.data.result.size,
@@ -182,10 +188,7 @@ class ProductService {
                     totalElements: response.data.result.totalElements,
                     totalPages: response.data.result.totalPages
                 };
-            } else if (response.data.result.page) {
-                // New structure with page object
-                products = response.data.result.products || response.data.result.data || [];
-                paginationInfo = response.data.result.page;
+                console.log('📦 Using OLD structure (flat pagination)');
             } else if (Array.isArray(response.data.result)) {
                 // Direct array response (fallback for getall)
                 products = response.data.result;
@@ -195,9 +198,13 @@ class ProductService {
                     totalElements: products.length,
                     totalPages: 1
                 };
+                console.log('📦 Using ARRAY structure (no pagination)');
             } else {
                 throw new Error('Unexpected response structure from API');
             }
+            
+            console.log('✅ Extracted products count:', products.length);
+            console.log('✅ Pagination info:', paginationInfo);
 
             // Apply additional client-side filtering for search term only
             if (queryParams.searchTerm) {
@@ -504,6 +511,44 @@ class ProductService {
             throw new Error('Delete review functionality is not available in the current backend');
         } catch (error) {
             console.error(`Error deleting review with ID ${reviewId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get top 10 newest products
+     * Backend: GET /products/get-top-10-new-in
+     * @returns {Promise} Promise containing the 10 newest products
+     */
+    async getTop10NewProducts() {
+        try {
+            const response = await api.public.get('/products/get-top-10-new-in');
+
+            if (response.data.code !== 200) {
+                throw new Error(response.data.message || 'Failed to fetch new products');
+            }
+
+            const products = response.data.result || [];
+
+            // Map products to frontend format
+            const mappedProducts = products.map(product => ({
+                id: product.id,
+                title: product.name || product.productName,
+                thumbnail: this.getProductImageUrl(product.images),
+                price: product.price || product.priceActive || product.priceDefault || 0,
+                discountPercentage: product.discount || 0,
+                brand: product.brand || '',
+                category: product.category || '',
+                description: product.description || '',
+                images: product.images || []
+            }));
+
+            return {
+                success: true,
+                products: mappedProducts
+            };
+        } catch (error) {
+            console.error('Error fetching top 10 new products:', error);
             throw error;
         }
     }

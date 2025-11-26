@@ -28,6 +28,34 @@ class CookieService {
     }
 
     /**
+     * Chỉ lưu access token (khi refresh token)
+     * @param {string} accessToken - Access token
+     * @param {number} expiryDays - Số ngày hết hạn (mặc định 7 ngày)
+     */
+    setAccessToken(accessToken, expiryDays = DEFAULT_EXPIRY_DAYS) {
+        const options = {
+            expires: expiryDays,
+            secure: false,
+            sameSite: 'strict'
+        };
+        Cookies.set(TOKEN_KEYS.ACCESS_TOKEN, accessToken, options);
+    }
+
+    /**
+     * Chỉ lưu refresh token
+     * @param {string} refreshToken - Refresh token
+     * @param {number} expiryDays - Số ngày hết hạn (mặc định 7 ngày)
+     */
+    setRefreshToken(refreshToken, expiryDays = DEFAULT_EXPIRY_DAYS) {
+        const options = {
+            expires: expiryDays,
+            secure: false,
+            sameSite: 'strict'
+        };
+        Cookies.set(TOKEN_KEYS.REFRESH_TOKEN, refreshToken, options);
+    }
+
+    /**
      * Lấy access token từ cookies
      * @returns {string|null} Access token hoặc null nếu không tồn tại
      */

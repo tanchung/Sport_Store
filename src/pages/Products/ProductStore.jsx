@@ -1,11 +1,8 @@
 import { create } from 'zustand';
 import ProductService from '../../services/Product/ProductServices';
 import CategoryService from '../../services/Category/CategoryServices';
-import CartService from '@services/Cart/CartService';
-/**
- * ProductStore - Quản lý trạng thái toàn cục cho các sản phẩm
- * Sử dụng Zustand để tạo store đơn giản và hiệu quả
- */
+import CartService from '../../services/Cart/CartService';
+
 export const useProductStore = create((set, get) => ({
   // State
   products: [],
@@ -19,7 +16,9 @@ export const useProductStore = create((set, get) => ({
     currentPage: 1,
     pageSize: 12,
     totalItems: 0,
-    totalPages: 0
+    totalPages: 0,
+    hasPrevious: false,
+    hasNext: false
   },
   filters: {
     categoryId: null,
@@ -27,7 +26,6 @@ export const useProductStore = create((set, get) => ({
     searchTerm: '',
     sortBy: 'ProductName',
     sortAscending: true,
-    // New filters for the updated API
     category: '',
     brand: '',
     priceMin: '',
@@ -42,12 +40,13 @@ export const useProductStore = create((set, get) => ({
   fetchCategories: async () => {
     try {
       set({ categoriesLoading: true });
-      
       const response = await CategoryService.getAllCategories();
-      // Access the data property of the response which contains the categories array
-      const categoriesData = response.data;
+      // Xử lý an toàn cho category response
+      let categoriesData = [];
+      if (Array.isArray(response)) categoriesData = response;
+      else if (Array.isArray(response.data)) categoriesData = response.data;
+      else if (response.result && Array.isArray(response.result)) categoriesData = response.result;
       
-      // Format categories data
       const formattedCategories = [
         { id: null, value: 'Tất cả' },
         ...categoriesData.map(category => ({
@@ -56,297 +55,175 @@ export const useProductStore = create((set, get) => ({
         }))
       ];
       
-      set({
-        categories: formattedCategories,
-        categoriesLoading: false
-      });
-      
+      set({ categories: formattedCategories, categoriesLoading: false });
       return formattedCategories;
     } catch (error) {
-      console.error('Error in ProductStore.fetchCategories:', error);
+      console.error('Error fetchCategories:', error);
       set({ categoriesLoading: false });
-      throw error;
     }
   },
+
   /**
-   * Lấy danh sách sản phẩm với các tham số lọc và phân trang
+   * Fetch Products - PHIÊN BẢN "BÓC TÁCH" DỮ LIỆU
+   * Tự động tìm 'content' và 'page' dù nó nằm sâu bao nhiêu lớp
    */
   fetchProducts: async () => {
     try {
       set({ loading: true, error: null });
       
       const { filters, pagination } = get();
+      console.log('🎯 FETCH PRODUCTS - Current pagination:', pagination);
+      
+      const apiPageNumber = pagination.currentPage > 0 ? pagination.currentPage - 1 : 0;
+      console.log('🎯 FETCH PRODUCTS - API pageNumber (0-based):', apiPageNumber);
+
       const queryParams = {
-        pageNumber: pagination.currentPage,
+        pageNumber: apiPageNumber, 
         pageSize: pagination.pageSize,
         ...filters
       };
+      
+      console.log('🎯 FETCH PRODUCTS - Query params:', queryParams);
 
-      const response = await ProductService.getProducts(queryParams);
+      // Gọi API
+      const rawResponse = await ProductService.getProducts(queryParams);
 
-      // Extract pagination metadata from backend response
-      // Backend returns: "page": { "size": , "number": , "totalElements": , "totalPages": }
-      const pageData = response?.metadata || {};
+      console.log('🚀 RAW RESPONSE TỪ SERVICE:', rawResponse);
+      console.log('🔍 Response Type:', typeof rawResponse);
+      console.log('🔍 Response Keys:', Object.keys(rawResponse || {}));
 
-      // Debug API response
-      console.log('🔍 ProductStore API Response:', {
-        response: response,
-        pageData: pageData,
-        productsCount: response?.products?.length || 0
+      // --- BƯỚC 1: XỬ LÝ RESPONSE TỪ SERVICE ---
+      // ProductService trả về: { metadata: {...}, products: [...] }
+      const productsList = rawResponse?.products || [];
+      const metadata = rawResponse?.metadata || {};
+      
+      console.log('📦 PRODUCTS LIST LENGTH:', productsList.length);
+      console.log('📊 METADATA:', JSON.stringify(metadata, null, 2));
+
+      // --- BƯỚC 2: TRÍCH XUẤT PAGINATION INFO ---
+      const totalItems = metadata.totalCount || 0;
+      const totalPages = metadata.totalPages || 0;
+      const currentApiPage = (metadata.currentPage || 1) - 1; // Convert to 0-based
+      const actualPageSize = metadata.pageSize || pagination.pageSize || 12;
+      
+      console.log('✅ KẾT QUẢ CUỐI CÙNG:', { 
+        totalItems, 
+        totalPages, 
+        currentApiPage: currentApiPage + 1, // Show 1-based in log
+        actualPageSize,
+        productsCount: productsList.length,
+        hasPrevious: metadata.hasPrevious,
+        hasNext: metadata.hasNext
       });
 
       const newPagination = {
         ...get().pagination,
-        totalItems: pageData.totalCount || 0,
-        totalPages: pageData.totalPages || 0,
-        currentPage: pageData.currentPage || 1,
-        pageSize: pageData.pageSize || 12,
-        hasPrevious: pageData.hasPrevious || false,
-        hasNext: pageData.hasNext || false
+        totalItems: Number(totalItems),
+        totalPages: Number(totalPages),
+        currentPage: Number(currentApiPage) + 1, // Store as 1-based
+        pageSize: Number(actualPageSize),
+        hasPrevious: Boolean(metadata.hasPrevious),
+        hasNext: Boolean(metadata.hasNext)
       };
 
-      console.log('📊 ProductStore New Pagination:', newPagination);
-
       set({
-        products: response.products,
+        products: productsList,
         pagination: newPagination,
         loading: false
       });
       
-      return response;
+      return rawResponse;
     } catch (error) {
-      console.error('Error in ProductStore.fetchProducts:', error);
+      console.error('❌ Error fetchProducts:', error);
       set({ 
-        error: error.message || 'Có lỗi xảy ra khi tải sản phẩm', 
-        loading: false 
+        error: error.message || 'Lỗi tải sản phẩm', 
+        loading: false, 
+        products: [] 
       });
-      throw error;
     }
   },
 
-  /**
-   * Lấy chi tiết sản phẩm theo ID
-   * @param {string} productId - ID của sản phẩm
-   */
   fetchProductDetails: async (productId) => {
     try {
-      set({ loading: true, error: null, productDetails: null });
-      
+      set({ loading: true, productDetails: null });
       const response = await ProductService.getProductById(productId);
-      
-      set({
-        productDetails: response.data,
-        loading: false
-      });
-      
+      set({ productDetails: response.data, loading: false });
       return response.data;
     } catch (error) {
-      console.error(`Error in ProductStore.fetchProductDetails for ID ${productId}:`, error);
-      set({ 
-        error: error.message || 'Có lỗi xảy ra khi tải chi tiết sản phẩm', 
-        loading: false 
-      });
-      throw error;
+      set({ error: error.message, loading: false });
     }
   },
 
-  /**
-   * Thêm sản phẩm vào giỏ hàng
-   * @param {string} productId - ID của sản phẩm
-   * @param {number} quantity - Số lượng sản phẩm
-   * @param {number} productSizeId - ID kích thước sản phẩm
-   */
   addCart: async (productId, quantity, productSizeId) => {
     try {
       set({ cartLoading: true, cartError: null, cartMessage: null });
-
-      if (!productSizeId) {
-        throw new Error('Vui lòng chọn kích thước sản phẩm trước khi thêm vào giỏ.');
-      }
-
+      if (!productSizeId) throw new Error('Chưa chọn size');
       const response = await CartService.addToCart(productId, quantity, productSizeId);
-
-      set({
-        cartLoading: false,
-        cartMessage: response.message
-      });
-
+      set({ cartLoading: false, cartMessage: response.message });
       return response;
     } catch (error) {
-      console.error(`Error in ProductStore.addCart for product ID ${productId}:`, error);
-      set({
-        cartError: error.message || 'Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng',
-        cartLoading: false
-      });
-      throw error;
+      set({ cartError: error.message, cartLoading: false });
     }
   },
 
-  /**
-   * Cập nhật các bộ lọc và tải lại sản phẩm
-   * @param {Object} newFilters - Các bộ lọc mới
-   */
   updateFilters: async (newFilters) => {
     set(state => ({
-      filters: {
-        ...state.filters,
-        ...newFilters
-      },
-      pagination: {
-        ...state.pagination,
-        currentPage: 1 // Reset về trang đầu tiên khi thay đổi bộ lọc
-      }
+      filters: { ...state.filters, ...newFilters },
+      pagination: { ...state.pagination, currentPage: 1 }
     }));
+    return await get().fetchProducts();
+  },
+
+  changePage: async (pageNumber) => {
+    console.log('🔄 CHANGE PAGE CALLED:', pageNumber);
+    
+    // Set pagination state trước
+    set(state => {
+      console.log('📄 Current pagination before change:', state.pagination);
+      return {
+        pagination: { ...state.pagination, currentPage: pageNumber }
+      };
+    });
+    
+    console.log('📄 New pagination after change:', get().pagination);
+    
+    // ĐỢI state update xong, sau đó fetch với pageNumber mới
+    // Sử dụng setTimeout để đảm bảo state đã được cập nhật
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
+    const updatedPagination = get().pagination;
+    console.log('📄 Pagination RIGHT BEFORE FETCH:', updatedPagination);
     
     return await get().fetchProducts();
   },
 
-  /**
-   * Thay đổi trang và tải sản phẩm mới
-   * @param {number} pageNumber - Số trang mới
-   */
-  changePage: async (pageNumber) => {
-    set(state => ({
-      pagination: {
-        ...state.pagination,
-        currentPage: pageNumber
-      }
-    }));
-
-    return await get().fetchProducts();
-  },
-
-  /**
-   * Thay đổi số lượng sản phẩm trên mỗi trang
-   * @param {number} pageSize - Số lượng sản phẩm trên mỗi trang
-   */
   changePageSize: async (pageSize) => {
     set(state => ({
-      pagination: {
-        ...state.pagination,
-        pageSize,
-        currentPage: 1 // Reset về trang đầu tiên khi thay đổi kích thước trang
-      }
+      pagination: { ...state.pagination, pageSize, currentPage: 1 }
     }));
-    
     return await get().fetchProducts();
   },
 
-  /**
-   * Cập nhật bộ lọc category
-   * @param {string} category - Category để lọc
-   */
-  updateCategoryFilter: async (category) => {
-    set(state => ({
-      filters: {
-        ...state.filters,
-        category: category || ''
-      },
-      pagination: {
-        ...state.pagination,
-        currentPage: 1 // Reset về trang đầu tiên khi thay đổi bộ lọc
-      }
-    }));
-
-    return await get().fetchProducts();
-  },
-
-  /**
-   * Cập nhật bộ lọc brand
-   * @param {string} brand - Brand để lọc
-   */
-  updateBrandFilter: async (brand) => {
-    set(state => ({
-      filters: {
-        ...state.filters,
-        brand: brand || ''
-      },
-      pagination: {
-        ...state.pagination,
-        currentPage: 1 // Reset về trang đầu tiên khi thay đổi bộ lọc
-      }
-    }));
-
-    return await get().fetchProducts();
-  },
-
-  /**
-   * Cập nhật bộ lọc giá
-   * @param {number} priceMin - Giá tối thiểu
-   * @param {number} priceMax - Giá tối đa
-   */
-  updatePriceFilter: async (priceMin, priceMax) => {
-    set(state => ({
-      filters: {
-        ...state.filters,
-        priceMin: priceMin || '',
-        priceMax: priceMax || ''
-      },
-      pagination: {
-        ...state.pagination,
-        currentPage: 1 // Reset về trang đầu tiên khi thay đổi bộ lọc
-      }
-    }));
-
-    return await get().fetchProducts();
-  },
-
-  /**
-   * Xóa tất cả bộ lọc
-   */
+  updateCategoryFilter: async (v) => get().updateFilters({ category: v }),
+  updateBrandFilter: async (v) => get().updateFilters({ brand: v }),
+  updatePriceFilter: async (min, max) => get().updateFilters({ priceMin: min, priceMax: max }),
+  
   clearAllFilters: async () => {
     set(state => ({
       filters: {
-        ...state.filters,
-        category: '',
-        brand: '',
-        priceMin: '',
-        priceMax: '',
-        searchTerm: '',
-        categoryId: null,
-        trendId: null,
-        sortBy: 'ProductName',
-        sortAscending: true
+        categoryId: null, trendId: null, searchTerm: '', sortBy: 'ProductName', sortAscending: true,
+        category: '', brand: '', priceMin: '', priceMax: ''
       },
-      pagination: {
-        ...state.pagination,
-        currentPage: 1
-      }
+      pagination: { ...state.pagination, currentPage: 1 }
     }));
-
     return await get().fetchProducts();
   },
 
-  /**
-   * Reset trạng thái của store về giá trị mặc định
-   */
   resetStore: () => {
     set({
-      products: [],
-      productDetails: null,
-      loading: false,
-      error: null,
-      cartLoading: false,
-      cartError: null,
-      cartMessage: null,
-      pagination: {
-        currentPage: 1,
-        pageSize: 10,
-        totalItems: 0,
-        totalPages: 0
-      },
-      filters: {
-        categoryId: null,
-        trendId: null,
-        searchTerm: '',
-        sortBy: 'ProductName',
-        sortAscending: true,
-        // New filters for the updated API
-        category: '',
-        brand: '',
-        priceMin: '',
-        priceMax: ''
-      }
+      products: [], productDetails: null, loading: false, error: null,
+      pagination: { currentPage: 1, pageSize: 12, totalItems: 0, totalPages: 0 },
+      filters: { category: '', brand: '', priceMin: '', priceMax: '', searchTerm: '', sortBy: 'ProductName', sortAscending: true }
     });
   }
 }));

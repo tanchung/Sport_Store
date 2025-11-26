@@ -96,7 +96,7 @@ const Footer = () => {
                   <img src={zalo} className='h-6 w-6' alt="Zalo" />
                 </a>
                 <a
-                  href='https://facebook.com'
+                  href='https://www.facebook.com/profile.php?id=61584089200607'
                   target='_blank'
                   rel='noopener noreferrer'
                   className='bg-blue-500/20 p-2 rounded-full'
