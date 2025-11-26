@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { message } from 'antd';
 
