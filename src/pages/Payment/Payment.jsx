@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { FaCheckCircle, FaCreditCard, FaMoneyBillWave, FaPaypal } from 'react-icons/fa'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import OrderSummary from './components/OrderSummary'
@@ -23,7 +22,6 @@ const Payment = () => {
   const [orderNumber, setOrderNumber] = useState(null)
   const [orderId, setOrderId] = useState(null)
   const [confirmItems, setConfirmItems] = useState([])
-  const [confirmOrder, setConfirmOrder] = useState(null)
 
   // Get form data from location state
   const formData = location.state?.formData || {}
@@ -198,7 +196,7 @@ const Payment = () => {
     };
 
     handlePaymentCallback();
-  }, [searchParams, orderId, location.state])
+  }, [searchParams, orderId, orderNumber, location.state])
 
   useEffect(() => {
     if (voucher) {
@@ -227,7 +225,7 @@ const Payment = () => {
     } else {
       setDiscountValue(0)
     }
-  }, [voucher])
+  }, [voucher, order])
 
   const formatPrice = price => {
     return new Intl.NumberFormat('vi-VN', {
@@ -266,7 +264,6 @@ const Payment = () => {
 
       setOrderId(createdOrderId)
       setOrderNumber(createOrderResponse.data.orderCode || `ORD-${createdOrderId}`)
-      setConfirmOrder(createOrderResponse.data)
 
       // Step 2: Apply voucher if selected
       if (voucher?.id) {
@@ -285,7 +282,6 @@ const Payment = () => {
         console.log('📋 Step 3: Fetching order details...')
         const orderDetailsResponse = await OrderService.getOrderById(createdOrderId)
         if (orderDetailsResponse && orderDetailsResponse.success) {
-          setConfirmOrder(orderDetailsResponse.data)
           const rawItems = orderDetailsResponse.data.orderItems || orderDetailsResponse.data.orderDetails || []
           const enriched = await resolveSizeNameForItems(rawItems)
           setConfirmItems(enriched)

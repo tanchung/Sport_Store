@@ -1,0 +1,3 @@
+/san-pham/*
+  X-Robots-Tag: all
+  Cache-Control: public, max-age=0, must-revalidate

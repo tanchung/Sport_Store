@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Products Listing -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/san-pham</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- About Page -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/gioi-thieu</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Contact Page -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/lien-he</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Purchase Guide -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/huong-dan/mua-hang</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Payment Methods -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/huong-dan/thanh-toan</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Return Policy -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/chinh-sach/doi-tra</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- Shipping Policy -->
+  <url>
+    <loc>https://vnhi-store.vercel.app/chinh-sach/van-chuyen</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Note: Product pages will be dynamically added by the /api/sitemap endpoint -->
+  <!-- Visit https://vnhi-store.vercel.app/sitemap.xml to see the full dynamic sitemap -->
+  
+</urlset>
