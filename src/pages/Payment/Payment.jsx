@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { FaCheckCircle, FaCreditCard, FaMoneyBillWave, FaPaypal } from 'react-icons/fa'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import OrderSummary from './components/OrderSummary'
@@ -26,7 +26,7 @@ const Payment = () => {
   // Get form data from location state
   const formData = location.state?.formData || {}
   const paymentMethodRaw = location.state?.paymentMethod || localStorage.getItem('payment_method') || 'cash'
-  const order = location.state?.order || {}
+  const order = useMemo(() => location.state?.order || {}, [location.state?.order])
   const buyNow = location.state?.buyNow || false
 
   // Map payment method to backend format

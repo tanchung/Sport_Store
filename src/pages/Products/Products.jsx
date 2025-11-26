@@ -126,7 +126,7 @@ const Products = () => {
   }
 
   // Hàm này giờ ít dùng trực tiếp vì đã bỏ dropdown, nhưng vẫn giữ để logic không lỗi
-  const handlePageSizeChange = pageSize => {
+  const _handlePageSizeChange = pageSize => {
     changePageSize(pageSize)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }

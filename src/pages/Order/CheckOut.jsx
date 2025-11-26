@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { FaArrowRight } from 'react-icons/fa6'
 import { FaCreditCard, FaMoneyBillWave, FaCashRegister, FaPaypal } from 'react-icons/fa'
-import { motion } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { message } from 'antd'
 import { useAuth } from '@/context/AuthContext'

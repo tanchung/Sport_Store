@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { FaMapMarkerAlt, FaCheck } from 'react-icons/fa';
 
 const AddressSelector = ({ addresses, selectedAddress, onSelectAddress, onAddNew }) => {
