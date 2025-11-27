@@ -8,6 +8,7 @@ const MarketingSubscription = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMailchimp, setShowMailchimp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const email = location.state?.email || '';
 
   const handleYes = () => {
@@ -24,6 +25,59 @@ const MarketingSubscription = () => {
     setTimeout(() => {
       navigate('/dang-nhap');
     }, 1500);
+  };
+
+  const handleMailchimpSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    // Chuyển đổi form action từ POST sang GET bằng cách thêm /post-json
+    const actionUrl = form.action.replace('/post?', '/post-json?');
+    
+    // Tạo query string từ form data
+    const params = new URLSearchParams();
+    for (let [key, value] of formData.entries()) {
+      params.append(key, value);
+    }
+    params.append('c', 'jsonpCallback'); // JSONP callback parameter
+    
+    try {
+      // Sử dụng JSONP để tránh CORS
+      const script = document.createElement('script');
+      const callbackName = 'jsonpCallback_' + Date.now();
+      
+      window[callbackName] = (data) => {
+        setIsSubmitting(false);
+        
+        if (data.result === 'success') {
+          handleSubscribeSuccess();
+        } else {
+          // Xử lý lỗi từ Mailchimp
+          let errorMessage = 'Có lỗi xảy ra. Vui lòng thử lại.';
+          if (data.msg) {
+            // Mailchimp trả về HTML trong msg, cần parse
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data.msg;
+            errorMessage = tempDiv.textContent || tempDiv.innerText || errorMessage;
+          }
+          message.error(errorMessage);
+        }
+        
+        // Cleanup
+        document.body.removeChild(script);
+        delete window[callbackName];
+      };
+      
+      script.src = `${actionUrl}&${params.toString()}&c=${callbackName}`;
+      document.body.appendChild(script);
+      
+    } catch {
+      setIsSubmitting(false);
+      message.error('Có lỗi xảy ra. Vui lòng thử lại.');
+    }
   };
 
   return (
@@ -183,6 +237,12 @@ const MarketingSubscription = () => {
                     transform: translateY(0) !important;
                   }
                   
+                  #mc_embed_signup .button:disabled {
+                    opacity: 0.6 !important;
+                    cursor: not-allowed !important;
+                    transform: none !important;
+                  }
+                  
                   /* Field group */
                   #mc_embed_signup .mc-field-group {
                     margin-bottom: 0 !important;
@@ -237,12 +297,7 @@ const MarketingSubscription = () => {
                   id="mc-embedded-subscribe-form"
                   name="mc-embedded-subscribe-form"
                   className="validate"
-                  target="_blank"
-                  onSubmit={() => {
-                    setTimeout(() => {
-                      handleSubscribeSuccess();
-                    }, 500);
-                  }}
+                  onSubmit={handleMailchimpSubmit}
                 >
                   <div id="mc_embed_signup_scroll">
                     <h2>Nhập email để nhận tin tức và ưu đãi</h2>
@@ -279,7 +334,8 @@ const MarketingSubscription = () => {
                           name="subscribe"
                           id="mc-embedded-subscribe"
                           className="button"
-                          value="Đăng ký nhận tin"
+                          value={isSubmitting ? "Đang xử lý..." : "Đăng ký nhận tin"}
+                          disabled={isSubmitting}
                         />
                       </div>
                     </div>
