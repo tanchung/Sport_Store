@@ -27,7 +27,17 @@ const Payment = () => {
 
   // Get form data from location state
   const formData = location.state?.formData || {}
-  const paymentMethodRaw = location.state?.paymentMethod || localStorage.getItem('payment_method') || 'cash'
+  
+  // Lấy paymentMethod từ nhiều nguồn
+  // 1. location.state (khi navigate từ checkout)
+  // 2. localStorage (khi redirect về từ PayOS/PayPal)
+  // 3. searchParams (nếu backend trả về)
+  // 4. Default: 'cash'
+  const paymentMethodRaw = location.state?.paymentMethod || 
+                           localStorage.getItem('payment_method') || 
+                           searchParams.get('paymentMethod') ||
+                           'cash'
+  
   const order = location.state?.order || {}
   const buyNow = location.state?.buyNow || false
 
@@ -47,8 +57,24 @@ const Payment = () => {
     raw: paymentMethodRaw,
     normalized: paymentMethod,
     fromLocationState: location.state?.paymentMethod,
-    fromLocalStorage: localStorage.getItem('payment_method')
+    fromLocalStorage: localStorage.getItem('payment_method'),
+    fromSearchParams: searchParams.get('paymentMethod')
   })
+
+  // Cleanup payment_method khi unmount hoặc navigate away (sau 5s)
+  useEffect(() => {
+    return () => {
+      // Delay xóa để đảm bảo đã render xong
+      setTimeout(() => {
+        const currentPath = window.location.pathname;
+        // Chỉ xóa nếu đã rời khỏi trang payment
+        if (!currentPath.includes('xac-nhan-thanh-toan')) {
+          localStorage.removeItem('payment_method');
+          console.log('🧹 Cleaned up payment_method from localStorage');
+        }
+      }, 5000);
+    };
+  }, []);
 
   // const discountValue = order?.total * (voucher?.discount || 0) / 100 || 0;
 
@@ -114,11 +140,11 @@ const Payment = () => {
           setOrderNumber(currentOrderCode || currentOrderId); // Ưu tiên orderCode
           message.success('Thanh toán PayPal thành công!');
 
-          // Xóa orderId, orderCode và paymentMethod khỏi localStorage sau khi execute thành công
+          // Xóa orderId và orderCode khỏi localStorage sau khi execute thành công
+          // GIỮ payment_method để hiển thị đúng phương thức
           localStorage.removeItem('paypal_order_id');
           localStorage.removeItem('paypal_order_code');
-          localStorage.removeItem('payment_method');
-          console.log('🗑️ Removed orderId, orderCode and paymentMethod from localStorage');
+          console.log('🗑️ Removed orderId and orderCode from localStorage');
         } else {
           console.error('❌ Execute failed:', executeResponse?.message);
           message.error(executeResponse?.message || 'Thanh toán PayPal thất bại!');
@@ -148,10 +174,9 @@ const Payment = () => {
         }
         message.error('Đơn hàng PayPal đã bị hủy!');
 
-        // Xóa localStorage
+        // Xóa localStorage - GIỮ payment_method
         localStorage.removeItem('paypal_order_id');
         localStorage.removeItem('paypal_order_code');
-        localStorage.removeItem('payment_method');
         return;
       }
 
@@ -177,22 +202,19 @@ const Payment = () => {
           setIsSuccess(false);
           setOrderNumber(orderCode);
           message.error('Đơn hàng đã bị hủy!');
-          // Xóa payment_method khỏi localStorage
-          localStorage.removeItem('payment_method');
+          // GIỮ payment_method để hiển thị đúng
         } else if (isPaymentSuccess) {
           console.log('✅ Payment successful from PayOS');
           setIsSuccess(true);
           setOrderNumber(orderCode);
           message.success('Thanh toán thành công!');
-          // Xóa payment_method khỏi localStorage
-          localStorage.removeItem('payment_method');
+          // GIỮ payment_method để hiển thị đúng
         } else {
           console.log('⚠️ Payment failed with status:', status);
           setIsSuccess(false);
           setOrderNumber(orderCode);
           message.error(`Thanh toán thất bại! Trạng thái: ${status}`);
-          // Xóa payment_method khỏi localStorage
-          localStorage.removeItem('payment_method');
+          // GIỮ payment_method để hiển thị đúng
         }
       }
     };
@@ -588,7 +610,7 @@ const Payment = () => {
               <div className="mt-1 text-sm text-gray-500">
                 Phương thức:&nbsp;
                 <span className="font-semibold text-gray-800 capitalize">
-                  {paymentMethod === 'PAYOS' ? 'PayOS' : 'Thanh toán khi nhận hàng'}
+                  {paymentMethod === 'PAYOS' ? 'PayOS' : paymentMethod === 'PAYPAL' ? 'PayPal' : paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : paymentMethod}
                 </span>
               </div>
 

@@ -69,7 +69,7 @@ const Header = () => {
             <div className='relative'>
               <span className='absolute -top-4 -left-1 text-4xl'><img src={logo} className='h-16 w-18' alt="Zalo" /></span>
               <h1 className='ml-16 text-2xl font-extrabold tracking-wide text-blue-500 sm:text-3xl'>
-                VAN<span className='text-blue-700'>HIEU</span>
+                VNHI<span className='text-blue-700'>STORE</span>
                 <br />
               </h1>
             </div>

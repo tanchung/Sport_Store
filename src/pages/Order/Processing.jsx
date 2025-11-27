@@ -285,7 +285,7 @@ const OrderProcessing = () => {
             <div>
               <p className='text-sm font-medium text-gray-700'>Phương thức thanh toán:</p>
               <p className='text-sm text-gray-900'>
-                {order.payment?.method || order.paymentMethodName || order.paymentMethod || '—'}
+                {order.paymentMethodName || order.paymentMethod || order.payment?.method || '—'}
               </p>
             </div>
             <div>
@@ -585,7 +585,7 @@ const OrderProcessing = () => {
                         }).format(order.totalAmount || order.totalPrice || 0)}
                       </td>
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                        {order.payment?.method || order.paymentMethodName || order.paymentMethod || '—'}
+                        {order.paymentMethodName || order.paymentMethod || order.payment?.method || '—'}
                       </td>
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
                         {order.payment?.status || '—'}

@@ -441,10 +441,10 @@ const OrderWaiting = () => {
                         }).format(order.totalPrice)}
                       </td>
                       <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                        {order.paymentMethodName || order.paymentMethod}
+                        {order.paymentMethodName || order.paymentMethod || order.payment?.method || '—'}
                       </td>
                       <td className='px-6 py-4 text-sm text-gray-500 break-words'>
-                        {order.shippingAddress}
+                        {order.shippingAddress || '—'}
                       </td>
                       <td className='max-w-xs truncate px-6 py-4 text-sm text-gray-500'>
                         {order.notes || '-'}

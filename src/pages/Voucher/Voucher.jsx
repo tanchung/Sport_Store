@@ -152,12 +152,6 @@ const Voucher = () => {
       return;
     }
 
-    // Check if user has enough points
-    if (userPoints < (voucher.pointsRequired || 0)) {
-      message.error(`Bạn cần ${voucher.pointsRequired || 0} điểm để đổi voucher này. Hiện tại bạn có ${userPoints} điểm.`);
-      return;
-    }
-
     setLoading(true);
     try {
       console.log('Adding voucher to user:', { userId, voucherId: voucher.id, voucher });
@@ -244,16 +238,6 @@ const Voucher = () => {
                             Giảm {v.discount || v.discountAmount}{v.isPercentage ? "%" : "₫"}
                             {v.minOrderAmount && ` đơn từ ${v.minOrderAmount?.toLocaleString()}₫`}
                           </p>
-                          {v.pointsRequired && (
-                            <p className="text-xs text-blue-600 mt-1">
-                              Cần {v.pointsRequired} điểm để đổi
-                              {userPoints >= v.pointsRequired ? (
-                                <span className="text-green-600 ml-1">✓ Đủ điểm</span>
-                              ) : (
-                                <span className="text-red-600 ml-1">✗ Thiếu {v.pointsRequired - userPoints} điểm</span>
-                              )}
-                            </p>
-                          )}
                         </div>
                         <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                           Có sẵn
@@ -269,15 +253,14 @@ const Voucher = () => {
 
                         <button
                           onClick={() => handleAddVoucherToUser(v)}
-                          disabled={loading || !v.active || (v.pointsRequired && userPoints < v.pointsRequired)}
+                          disabled={loading || !v.active}
                           className={`px-4 py-2 rounded-lg font-medium text-sm ${
-                            v.active && (!v.pointsRequired || userPoints >= v.pointsRequired)
+                            v.active
                               ? "bg-blue-600 text-white hover:bg-blue-700"
                               : "bg-gray-200 text-gray-500 cursor-not-allowed"
                           } transition-colors`}
                         >
-                          {loading ? 'Đang xử lý...' : 
-                           v.pointsRequired && userPoints < v.pointsRequired ? 'Không đủ điểm' : 'Thêm vào ví'}
+                          {loading ? 'Đang xử lý...' : 'Thêm vào ví'}
                         </button>
                       </div>
                     </div>
